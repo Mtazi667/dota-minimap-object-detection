@@ -1,15 +1,21 @@
+# Data folders
 Training Data/
 Validation Data/
 Testing Images/
 
+# Local dependency folders
 .codex_deps/
 deps/
 deps_local/
+
+# Jupyter
 .ipynb_checkpoints/
 
+# Python
 __pycache__/
 *.pyc
 
+# Model outputs / training outputs
 *.pt
 *.pth
 *.onnx
@@ -18,3 +24,7 @@ __pycache__/
 runs/
 weights/
 checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
