@@ -1,0 +1,20 @@
+Training Data/
+Validation Data/
+Testing Images/
+
+.codex_deps/
+deps/
+deps_local/
+.ipynb_checkpoints/
+
+__pycache__/
+*.pyc
+
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+runs/
+weights/
+checkpoints/
