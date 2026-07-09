@@ -27,6 +27,15 @@ Etat connu :
 - Obtenir un projet valorisable sur CV/LinkedIn.
 - Rester dans un niveau de complexite realiste pour environ 1,5 mois de travail.
 
+## Presentation intermediaire
+- Presentation obligatoire le jeudi 9 juillet 2026 a midi.
+- Duree attendue : 5 a 10 minutes.
+- Contenu demande : presenter l'avancement du projet et expliquer en profondeur un algorithme d'apprentissage automatique utilise dans le projet.
+- Besoin avant la fin du mercredi 8 juillet 2026 : creer une cheatsheet personnelle pour aider l'etudiant a presenter son avancement, son choix d'algorithme, les concepts essentiels et les reponses possibles aux questions.
+- Algorithme recommande pour cette presentation : YOLO / YOLO-OBB, car il correspond directement a la detection d'objets dans DOTA et au choix provisoire de conserver les boites orientees.
+- Preference de l'etudiant pour la cheatsheet : lisible sur telephone, tres complete, mais pas un texte a lire mot pour mot; utiliser des points de repere, phrases-clefs, questions/reponses et structure de presentation.
+- L'etudiant souhaite presenter principalement le notebook et etre transparent sur l'usage de l'IA comme outil d'apprentissage, verification et comprehension.
+
 ## Contraintes techniques
 - Systeme : Windows.
 - GPU : RTX 4060.
@@ -81,4 +90,13 @@ Etat connu :
 - Verification executee hors notebook : les cellules de code passent sans erreur.
 - Annotations chargees : 98 990 objets train, 28 853 objets validation, 127 843 objets au total.
 - Orientation absolue des boites : mediane environ 47.17 degres en train et 52.28 degres en validation, ce qui confirme l'importance des boites orientees dans DOTA.
-- Prochaine etape logique : commencer la question 2, donc le pretraitement, notamment le choix entre conserver les boites orientees ou convertir vers des boites horizontales selon le modele retenu.
+- 2026-07-08 : debut de la question 2 dans `projet_dota.ipynb`. Ajout du pretraitement des annotations : encodage des classes, fusion avec les tailles d'images, coordonnees normalisees, representation horizontale type centre-largeur-hauteur, controle qualite et sous-ensemble `training_ready_objects`.
+- Decision provisoire : conserver les boites orientees comme representation principale, mais preparer aussi les boites horizontales pour une baseline simple ou l'analyse des erreurs.
+- Controle qualite du pretraitement : 0 boite avec largeur/hauteur non positive; 171 objets ont au moins une coordonnee normalisee hors `[0, 1]` et sont exclus provisoirement de `training_ready_objects`. Cela laisse 127 672 objets utilisables pour un premier export.
+- 2026-07-08 : ajout d'un export provisoire YOLO-OBB dans le notebook. Le format utilise est `class_index x1 y1 x2 y2 x3 y3 x4 y4` avec coordonnees normalisees, conforme a la documentation Ultralytics consultee le 2026-07-08.
+- Export YOLO-OBB verifie hors notebook : 1 407 fichiers label train pour 98 841 objets exportes; 456 fichiers label validation pour 28 831 objets exportes; fichier `prepared_data/dota_yolo_obb/dota_yolo_obb.yaml` cree.
+- Les images ne sont pas encore liees/copiees dans `prepared_data/dota_yolo_obb/images/`; la cellule optionnelle `CREATE_IMAGE_LINKS = False` permet de le faire plus tard en utilisant d'abord des liens durs, puis des copies si necessaire.
+- `.gitignore` ignore maintenant `prepared_data/`, car ces exports sont regenerables.
+- 2026-07-08 : ajout d'une section pedagogique `Modele predictif envisage : YOLO-OBB` expliquant YOLO, YOLO-OBB, la difference avec les boites horizontales, les erreurs apprises pendant l'entrainement et pourquoi cet algorithme convient a DOTA. Cette section doit servir de base a la presentation du 2026-07-09.
+- 2026-07-08 : creation de `cheatsheet_presentation_2026-07-09.md`, fiche personnelle complete et lisible sur telephone pour la presentation. Elle couvre l'avancement, le notebook a montrer, YOLO, YOLO-OBB, le pretraitement, l'usage de l'IA et les questions probables.
+- Prochaine etape logique : continuer le projet si le temps le permet, puis relire/ajuster la cheatsheet avant la presentation.

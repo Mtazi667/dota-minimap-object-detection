@@ -16,6 +16,7 @@ __pycache__/
 *.pyc
 
 # Model outputs / training outputs
+prepared_data/
 *.pt
 *.pth
 *.onnx
