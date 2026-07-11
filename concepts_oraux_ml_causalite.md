@@ -435,8 +435,8 @@ Objectif : garder une vision claire de l'avancement sans passer trop de temps su
 
 | Bloc | Concepts | Statut |
 |---|---|---|
-| Evaluation detection | IoU, TP/FP/FN, precision, recall, mAP | En cours |
-| YOLO pratique | confidence, NMS, loss, OBB | A faire |
+| Evaluation detection | IoU, TP/FP/FN, precision, recall, mAP | Couvert, a pratiquer |
+| YOLO pratique | confidence, NMS, loss, OBB | Premier passage couvert |
 | Causalite de base | DAG, traitement, outcome, confounder, mediator, collider | A faire |
 | Methodologie ML | overfitting, validation, leakage, baseline | A faire |
 | Causalite appliquee DOTA | traitement, outcome, ajustements, erreurs du detecteur | A faire |
@@ -575,5 +575,241 @@ Piege :
 Phrase orale utile :
 
 - "La precision me dit si les detections sont fiables; le recall me dit si le modele oublie beaucoup d'objets."
+
+Statut : A renforcer.
+
+---
+
+### Carte 4 - mAP
+
+Question probable du prof :
+
+- C'est quoi la mAP et pourquoi on l'utilise en detection ?
+
+Reponse en 20 secondes :
+
+- La mAP veut dire mean Average Precision. Elle resume la performance d'un detecteur en combinant precision et recall, puis en moyennant le resultat sur les classes. C'est utile parce qu'un detecteur ne produit pas seulement une classe : il produit plusieurs boites avec des scores de confiance.
+
+Intuition :
+
+- Pour une classe, on regarde comment la precision et le recall changent quand on varie le seuil de confiance.
+- Cette relation donne une courbe precision-recall.
+- L'AP resume cette courbe pour une classe.
+- La mAP moyenne les AP sur plusieurs classes.
+
+Mini-exemple :
+
+- Si le modele detecte tres bien les `plane`, AP plane sera elevee.
+- S'il detecte mal les `bridge`, AP bridge sera faible.
+- La mAP resume les performances sur toutes les classes.
+
+Lien avec DOTA :
+
+- DOTA contient 15 classes.
+- Certaines classes sont tres frequentes, comme `ship` ou `small-vehicle`.
+- D'autres sont plus rares.
+- La mAP aide a evaluer le detecteur sans regarder seulement une classe dominante.
+
+Ou ca apparait dans notre notebook/pipeline :
+
+- Le notebook a deja une section `Evaluation prevue du detecteur` qui introduit la mAP.
+- La vraie mAP sera calculee apres l'entrainement YOLO-OBB, quand on aura des predictions sur la validation.
+- Il faudra idealement regarder la mAP globale et les resultats par classe.
+
+Piege :
+
+- Une bonne mAP globale peut cacher une mauvaise performance sur une classe rare ou difficile.
+- Il ne faut pas conclure que le modele est bon partout seulement avec une moyenne.
+
+Phrase orale utile :
+
+- "La mAP donne une evaluation globale du detecteur, mais dans DOTA je devrai aussi regarder les performances par classe, taille et orientation."
+
+Statut : A renforcer.
+
+---
+
+### Carte 5 - Confidence score
+
+Question probable du prof :
+
+- Que represente le score de confiance dans YOLO ?
+
+Reponse en 20 secondes :
+
+- Le score de confiance indique a quel point le modele est confiant dans une detection. Il sert a classer et filtrer les predictions. Une detection avec une confiance tres faible peut etre ignoree, tandis qu'une detection tres confiante a plus de chances d'etre gardee.
+
+Intuition :
+
+- Le modele ne dit pas seulement "il y a un avion".
+- Il dit plutot "je pense qu'il y a un avion ici, avec une certaine confiance".
+
+Mini-exemple :
+
+- Detection `plane` avec confiance 0.92 : prediction assez forte.
+- Detection `plane` avec confiance 0.18 : prediction faible, probablement filtree.
+
+Lien avec DOTA :
+
+- Les images aeriennes peuvent contenir des zones complexes : batiments, routes, ports, petits objets.
+- Le modele peut produire des detections incertaines dans ces zones.
+- Le score de confiance aide a decider quelles detections garder.
+
+Ou ca apparait dans notre notebook/pipeline :
+
+- Le notebook n'a pas encore de predictions YOLO, donc pas encore de scores de confiance reels.
+- Apres entrainement, chaque prediction YOLO-OBB aura un score.
+- Ces scores serviront a calculer precision, recall et mAP.
+
+Piege :
+
+- Une confiance elevee ne garantit pas que la boite est bien placee.
+- Il faut combiner confiance, classe predite et IoU.
+
+Phrase orale utile :
+
+- "Le score de confiance sert a filtrer les detections, mais il ne remplace pas l'evaluation geometrique avec l'IoU."
+
+Statut : A faire pratiquer.
+
+---
+
+### Carte 6 - NMS
+
+Question probable du prof :
+
+- Pourquoi YOLO a besoin de NMS ?
+
+Reponse en 20 secondes :
+
+- YOLO peut predire plusieurs boites pour le meme objet. La NMS, Non-Maximum Suppression, garde la detection la plus confiante et supprime les detections trop proches qui representent probablement le meme objet.
+
+Intuition :
+
+- Un seul avion peut generer plusieurs detections proches.
+- Sans filtrage, on compterait plusieurs fois le meme objet.
+- La NMS nettoie les predictions.
+
+Mini-exemple :
+
+- Trois boites detectent le meme avion.
+- Elles ont des confiances 0.91, 0.84 et 0.70.
+- La NMS garde souvent celle a 0.91 et supprime les autres si elles se chevauchent trop.
+
+Lien avec DOTA :
+
+- DOTA peut contenir des zones denses avec beaucoup de vehicules ou bateaux proches.
+- La NMS est utile, mais elle doit etre reglee prudemment.
+- Si elle est trop agressive, elle peut supprimer des objets reels proches les uns des autres.
+
+Ou ca apparait dans notre notebook/pipeline :
+
+- La NMS n'apparaitra vraiment qu'apres les predictions YOLO-OBB.
+- Elle fait partie du post-traitement du modele.
+- Elle influencera les faux positifs, faux negatifs, precision et recall.
+
+Piege :
+
+- NMS n'est pas l'entrainement du modele; c'est une etape apres prediction.
+- Elle ne corrige pas un modele mauvais, elle filtre seulement les detections candidates.
+
+Phrase orale utile :
+
+- "La NMS evite de compter plusieurs fois le meme objet, mais dans les zones denses elle peut aussi supprimer des objets proches si elle est trop stricte."
+
+Statut : A faire pratiquer.
+
+---
+
+### Carte 7 - Loss YOLO
+
+Question probable du prof :
+
+- Qu'est-ce que YOLO apprend pendant l'entrainement ?
+
+Reponse en 20 secondes :
+
+- YOLO apprend en minimisant une loss, c'est-a-dire une mesure d'erreur entre ses predictions et les annotations. Cette erreur penalise surtout trois choses : une mauvaise localisation de la boite, une mauvaise classe et une mauvaise confiance. En YOLO-OBB, la localisation doit aussi respecter l'orientation de l'objet.
+
+Intuition :
+
+- La loss est le signal qui dit au modele dans quelle direction corriger ses poids.
+- Plus la prediction est loin de l'annotation, plus la penalite est forte.
+- Pendant l'entrainement, le modele fait beaucoup de petites corrections.
+
+Mini-exemple :
+
+- Si un avion est annote a gauche de l'image mais que YOLO le predit trop a droite, la partie localisation de la loss augmente.
+- Si la boite est bonne mais la classe predite est `ship` au lieu de `plane`, la partie classification augmente.
+- Si le modele est tres confiant dans une mauvaise detection, l'erreur est plus grave.
+
+Lien avec DOTA :
+
+- Dans DOTA, les objets sont souvent petits, denses et orientes.
+- La loss doit donc aider le modele a apprendre des boites precises, pas seulement des classes.
+- Pour YOLO-OBB, une boite mal orientee peut etre penalisee meme si le centre est proche de l'objet.
+
+Ou ca apparait dans notre notebook/pipeline :
+
+- Le notebook prepare les labels YOLO-OBB qui serviront de verite terrain pendant l'entrainement.
+- La cellule d'entrainement est preparee mais desactivee par defaut avec `RUN_YOLO_OBB_TRAINING = False`.
+- Quand l'entrainement sera lance, Ultralytics affichera des pertes comme la loss de boite et la loss de classe.
+
+Piege :
+
+- La loss n'est pas la meme chose que la mAP.
+- La loss sert a entrainer le modele; la mAP sert a evaluer sa qualite sur validation.
+- Une loss qui baisse est bon signe, mais il faut verifier les metriques de validation.
+
+Phrase orale utile :
+
+- "La loss est le signal d'apprentissage : elle penalise les erreurs de boite, de classe et de confiance, puis le modele ajuste ses poids pour reduire cette erreur."
+
+Statut : A renforcer.
+
+---
+
+### Carte 8 - YOLO classique vs YOLO-OBB
+
+Question probable du prof :
+
+- Pourquoi utiliser YOLO-OBB au lieu d'un YOLO classique ?
+
+Reponse en 20 secondes :
+
+- Un YOLO classique predit des boites horizontales, alignees avec les axes de l'image. YOLO-OBB predit des boites orientees, donc des boites qui peuvent tourner avec l'objet. Dans DOTA, c'est important parce que les avions, bateaux, ponts et vehicules peuvent etre dans n'importe quelle orientation.
+
+Intuition :
+
+- Boite horizontale = rectangle droit, meme si l'objet est diagonal.
+- Boite orientee = rectangle qui suit mieux la direction de l'objet.
+- Moins de fond inutile dans la boite signifie une localisation plus precise.
+
+Mini-exemple :
+
+- Un avion diagonal dans une image satellite.
+- Avec une boite horizontale, la boite englobe l'avion plus beaucoup de fond.
+- Avec une boite orientee, la boite suit l'avion et represente mieux sa vraie forme.
+
+Lien avec DOTA :
+
+- DOTA fournit directement des annotations avec 4 coins, donc le dataset est naturellement compatible avec les boites orientees.
+- Notre exploration a montre que l'orientation mediane est loin de 0 degre.
+- Cela justifie de garder les OBB comme representation principale.
+
+Ou ca apparait dans notre notebook/pipeline :
+
+- Le notebook exporte les labels YOLO-OBB au format `class_index x1 y1 x2 y2 x3 y3 x4 y4`.
+- On garde aussi des boites horizontales derivees pour une baseline simple ou pour analyser certaines erreurs.
+- La section YOLO explique deja pourquoi YOLO-OBB est plus coherent avec DOTA.
+
+Piege :
+
+- YOLO-OBB n'est pas automatiquement meilleur dans tous les cas.
+- Il est plus adapte a DOTA, mais il demande des annotations correctes, un format exact et une evaluation compatible avec les boites orientees.
+
+Phrase orale utile :
+
+- "YOLO classique localise avec des rectangles horizontaux; YOLO-OBB localise avec des rectangles orientes, ce qui correspond beaucoup mieux aux objets de DOTA."
 
 Statut : A renforcer.
