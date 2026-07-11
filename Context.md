@@ -80,6 +80,7 @@ Etat connu :
 - Des fichiers auxiliaires peuvent etre crees si cela aide l'organisation, mais le notebook soumis doit rester executable independamment et inclure les fonctions necessaires.
 - Le code doit rester lisible et plausible pour un projet etudiant; les commentaires dans le code doivent surtout aider le lecteur du notebook, tandis que les explications detaillees se feront dans la conversation.
 - Dans le notebook, eviter les accents sur les voyelles pour contourner le probleme d'affichage en `?`; garder simplement la voyelle non accentuee, meme si la grammaire devient moins correcte. Exemple : `frere`, pas `frre`.
+- Preference Git a partir du 2026-07-11 : apres chaque modification de fichier, pousser les changements avec le raccourci `git cpush "message"`. Le message doit resumer la modification, par exemple `git cpush "Updated concepts cards"`.
 
 ## Avancement du notebook
 - 2026-06-09 : `projet_dota.ipynb` a ete initialise avec 11 cellules.
