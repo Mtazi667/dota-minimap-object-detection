@@ -29,6 +29,11 @@
 - Temps disponible : environ 1,5 mois avec contraintes personnelles et travail a temps partiel.
 - Le pipeline doit rester realiste pour un debutant en deep learning.
 
+## Workflow Git
+- Apres chaque modification de fichier, pousser les changements avec le raccourci `git cpush "message"` depuis la racine du depot.
+- Le message doit resumer clairement la modification, par exemple `git cpush "Updated concept cards"`.
+- Si le raccourci cree le commit mais ne pousse pas a cause du reseau ou d'un blocage Git, signaler clairement l'etat au lieu de supposer que le push a reussi.
+
 ## Decisions a valider avec l'etudiant
 - Ne pas imposer de choix final sans consultation lorsque plusieurs options structurantes existent.
 - Presenter les avantages/inconvenients des choix importants : modele, format de boites, taille des tuiles, sous-ensemble, traitement causal, variables d'ajustement.
