@@ -1,0 +1,149 @@
+{
+  "causal_question": "Quel est l'effet d'etre un objet tres petit sur la probabilite d'une detection correcte (IoU >= 0.50), apres ajustement sur la classe, l'orientation, la densite, la source, le GSD, le ratio de forme et la position du centre dans la tuile ?",
+  "treatment_definition": {
+    "column": "very_small",
+    "threshold_relative_area_tile": 0.0005035400390625,
+    "reference": "Premier quartile des objets train uniques."
+  },
+  "outcome_definition": "Meme classe, confiance >= 0.25 et IoU OBB >= 0.50.",
+  "primary_model": {
+    "model": "YOLO26n-OBB-1024",
+    "task": "obb",
+    "imgsz": 1024,
+    "weights": "runs/dota_experiment_v1/tuned_obb_yolo26n_e20_img1024/weights/best.pt",
+    "precision": 0.573660457511712,
+    "recall": 0.28976768590358226,
+    "f1": 0.3850424949319867,
+    "map50": 0.27404547232816995,
+    "map50_95": 0.18613868723372795,
+    "fitness": 0.18613868723372795,
+    "inference_ms_per_image": 7.603911428275157
+  },
+  "primary_aipw_effect": {
+    "method": "AIPW doublement robuste",
+    "effect": -0.36780362964224167,
+    "ci_lower": -0.5298267622218966,
+    "ci_upper": -0.16639945904837428,
+    "n_objects": 1646,
+    "n_images": 53,
+    "treatment_prevalence": 0.3784933171324423,
+    "outcome_treated": 0.30658105939004815,
+    "outcome_control": 0.5131964809384164,
+    "propensity_overlap_0_1_0_9": 0.7654921020656136
+  },
+  "n_causal_objects": 1646,
+  "n_causal_images": 53,
+  "models": [
+    {
+      "model": "YOLO26n-HBB-640",
+      "task": "hbb",
+      "imgsz": 640,
+      "weights": "runs/dota_experiment_v1/baseline_hbb_yolo26n_e20/weights/best.pt",
+      "precision": 0.45051212376455857,
+      "recall": 0.2827004054896257,
+      "f1": 0.3474025742461938,
+      "map50": 0.2574042379255404,
+      "map50_95": 0.14527543483329203,
+      "fitness": 0.14527543483329203,
+      "inference_ms_per_image": 3.0305649039848728
+    },
+    {
+      "model": "YOLO26n-OBB-1024",
+      "task": "obb",
+      "imgsz": 1024,
+      "weights": "runs/dota_experiment_v1/tuned_obb_yolo26n_e20_img1024/weights/best.pt",
+      "precision": 0.573660457511712,
+      "recall": 0.28976768590358226,
+      "f1": 0.3850424949319867,
+      "map50": 0.27404547232816995,
+      "map50_95": 0.18613868723372795,
+      "fitness": 0.18613868723372795,
+      "inference_ms_per_image": 7.603911428275157
+    },
+    {
+      "model": "YOLO26n-OBB-640",
+      "task": "obb",
+      "imgsz": 640,
+      "weights": "runs/dota_experiment_v1/main_obb_yolo26n_e20_img640/weights/best.pt",
+      "precision": 0.2559232903990675,
+      "recall": 0.29878371838557755,
+      "f1": 0.2756976606242659,
+      "map50": 0.23901310623052574,
+      "map50_95": 0.1463826870858038,
+      "fitness": 0.1463826870858038,
+      "inference_ms_per_image": 5.272849786038302
+    }
+  ],
+  "sensitivity": [
+    {
+      "specification": "IoU >= 0.40",
+      "effect": -0.37366509067575815,
+      "ci_lower": -0.5180054988707081,
+      "ci_upper": -0.19000708832572916,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.32102728731942215,
+      "outcome_control": 0.530791788856305
+    },
+    {
+      "specification": "IoU >= 0.50",
+      "effect": -0.36780362964224167,
+      "ci_lower": -0.5186745180826429,
+      "ci_upper": -0.1829319909235698,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.30658105939004815,
+      "outcome_control": 0.5131964809384164
+    },
+    {
+      "specification": "IoU >= 0.60",
+      "effect": -0.33173830009685734,
+      "ci_lower": -0.4795654616840275,
+      "ci_upper": -0.14063963250839648,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.27768860353130015,
+      "outcome_control": 0.48191593352883677
+    },
+    {
+      "specification": "Propension clip 0.02",
+      "effect": -0.27445268002904644,
+      "ci_lower": -0.5072728896900184,
+      "ci_upper": 0.08546934298341341,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.30658105939004815,
+      "outcome_control": 0.5131964809384164
+    },
+    {
+      "specification": "Propension clip 0.10",
+      "effect": -0.38803959121928316,
+      "ci_lower": -0.5043279800968216,
+      "ci_upper": -0.24636039576806767,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.30658105939004815,
+      "outcome_control": 0.5131964809384164
+    },
+    {
+      "specification": "Graine nuisances 7",
+      "effect": -0.37044737020680485,
+      "ci_lower": -0.5345674685010309,
+      "ci_upper": -0.15455135223888922,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.30658105939004815,
+      "outcome_control": 0.5131964809384164
+    },
+    {
+      "specification": "Graine nuisances 99",
+      "effect": -0.36590318903408175,
+      "ci_lower": -0.521580777923229,
+      "ci_upper": -0.17682833393749645,
+      "treatment_prevalence": 0.3784933171324423,
+      "outcome_treated": 0.30658105939004815,
+      "outcome_control": 0.5131964809384164
+    }
+  ],
+  "limitations": [
+    "Traitement non randomise et variables non observees possibles.",
+    "Sous-ensemble stratifie plutot que DOTA complet.",
+    "Forêt sur pseudo-outcomes AIPW, approximation pedagogique d'une foret causale.",
+    "Arbre honnete volontairement limite a une division et grandes feuilles.",
+    "Intervalles bootstrap par image sans re-ajustement complet des modeles nuisances."
+  ]
+}

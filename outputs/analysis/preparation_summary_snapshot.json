@@ -1,0 +1,181 @@
+{
+  "project_dir": "C:\\Users\\Tazi\\Desktop\\School\\Projet\\dota-minimap-object-detection",
+  "output_root": "C:\\Users\\Tazi\\Desktop\\School\\Projet\\dota-minimap-object-detection\\prepared_data\\dota_experiment_v1",
+  "configuration": {
+    "train_image_count": 180,
+    "val_image_count": 60,
+    "tile_size": 1024,
+    "train_stride": 824,
+    "val_stride": 1024,
+    "seed": 42
+  },
+  "yaml": {
+    "obb": "C:\\Users\\Tazi\\Desktop\\School\\Projet\\dota-minimap-object-detection\\prepared_data\\dota_experiment_v1\\obb\\dota_obb.yaml",
+    "hbb": "C:\\Users\\Tazi\\Desktop\\School\\Projet\\dota-minimap-object-detection\\prepared_data\\dota_experiment_v1\\hbb\\dota_hbb.yaml"
+  },
+  "validation": {
+    "original_image_overlap_count": 0,
+    "tasks": {
+      "obb": {
+        "train": {
+          "image_count": 912,
+          "negative_image_count": 111,
+          "object_count": 6515,
+          "class_count": 15,
+          "classes_present": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14
+          ]
+        },
+        "val": {
+          "image_count": 245,
+          "negative_image_count": 33,
+          "object_count": 1972,
+          "class_count": 15,
+          "classes_present": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14
+          ]
+        }
+      },
+      "hbb": {
+        "train": {
+          "image_count": 912,
+          "negative_image_count": 111,
+          "object_count": 6515,
+          "class_count": 15,
+          "classes_present": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14
+          ]
+        },
+        "val": {
+          "image_count": 245,
+          "negative_image_count": 33,
+          "object_count": 1972,
+          "class_count": 15,
+          "classes_present": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14
+          ]
+        }
+      }
+    },
+    "manifest_row_count": 8487,
+    "unique_original_object_count": 6292
+  },
+  "class_coverage": {
+    "plane": {
+      "train": 491,
+      "val": 237
+    },
+    "ship": {
+      "train": 350,
+      "val": 408
+    },
+    "storage-tank": {
+      "train": 326,
+      "val": 51
+    },
+    "baseball-diamond": {
+      "train": 34,
+      "val": 48
+    },
+    "tennis-court": {
+      "train": 184,
+      "val": 92
+    },
+    "basketball-court": {
+      "train": 42,
+      "val": 12
+    },
+    "ground-track-field": {
+      "train": 31,
+      "val": 19
+    },
+    "harbor": {
+      "train": 362,
+      "val": 102
+    },
+    "bridge": {
+      "train": 216,
+      "val": 63
+    },
+    "large-vehicle": {
+      "train": 1051,
+      "val": 232
+    },
+    "small-vehicle": {
+      "train": 1283,
+      "val": 251
+    },
+    "helicopter": {
+      "train": 48,
+      "val": 6
+    },
+    "roundabout": {
+      "train": 46,
+      "val": 17
+    },
+    "soccer-ball-field": {
+      "train": 42,
+      "val": 17
+    },
+    "swimming-pool": {
+      "train": 140,
+      "val": 91
+    }
+  }
+}

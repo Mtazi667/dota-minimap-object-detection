@@ -1,0 +1,3909 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guide d'etude DOTA hors ligne</title><style>
+    :root { --navy:#17324D; --teal:#087F8C; --orange:#D97706; --paper:#fff; --ink:#17202A; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin:0; color:var(--ink); font-family:Arial, Helvetica, sans-serif; background:#EEF2F6; line-height:1.55; }
+    header { background:linear-gradient(120deg,var(--navy),#28597D); color:white; padding:2.2rem max(5vw,1rem); }
+    header h1 { margin:0 0 .4rem; font-size:clamp(1.8rem,4vw,3rem); }
+    header p { margin:0; max-width:62rem; opacity:.92; }
+    nav { position:sticky; top:0; z-index:5; display:flex; gap:.65rem; overflow:auto; padding:.65rem max(3vw,.75rem); background:#fff; box-shadow:0 2px 10px #0002; }
+    nav a { white-space:nowrap; text-decoration:none; color:var(--navy); border:1px solid #CBD5E1; border-radius:999px; padding:.35rem .7rem; font-size:.82rem; }
+    nav a:hover { color:white; background:var(--teal); border-color:var(--teal); }
+    main { max-width:980px; margin:1.5rem auto 5rem; padding:0 1rem; }
+    .document { background:var(--paper); padding:clamp(1.1rem,4vw,3rem); margin:0 0 1.5rem; border-radius:14px; box-shadow:0 8px 30px #17324D14; }
+    .source-label { float:right; color:#64748B; font-size:.72rem; background:#F1F5F9; padding:.25rem .5rem; border-radius:6px; }
+    h1,h2,h3,h4 { color:var(--navy); line-height:1.2; scroll-margin-top:4.5rem; }
+    h2 { border-bottom:2px solid #DDE8F0; padding-bottom:.3rem; margin-top:2rem; }
+    h3 { color:var(--teal); margin-top:1.5rem; }
+    code { background:#EFF6FF; color:#0F3D5E; padding:.08rem .28rem; border-radius:4px; }
+    pre { overflow:auto; background:#102A43; color:#E6EDF3; padding:1rem; border-radius:8px; line-height:1.4; }
+    blockquote { margin:1rem 0; padding:.8rem 1rem; border-left:5px solid var(--orange); background:#FFF7ED; }
+    table { width:100%; border-collapse:collapse; display:block; overflow:auto; margin:1rem 0; font-size:.9rem; }
+    th { background:var(--navy); color:#fff; }
+    th,td { border:1px solid #CBD5E1; padding:.45rem .55rem; text-align:left; }
+    tr:nth-child(even) td { background:#F8FAFC; }
+    a { color:#0369A1; }
+    .toolbar { position:fixed; right:1rem; bottom:1rem; z-index:10; }
+    .toolbar button { border:0; border-radius:999px; background:var(--orange); color:white; padding:.7rem 1rem; box-shadow:0 4px 15px #0003; cursor:pointer; }
+    @media print {
+      body { background:white; }
+      header, nav, .toolbar { display:none; }
+      main { max-width:none; margin:0; padding:0; }
+      .document { box-shadow:none; border-radius:0; page-break-before:always; margin:0; }
+      a { color:inherit; text-decoration:none; }
+      pre, table, blockquote { break-inside:avoid; }
+    }
+    </style></head><body><header><h1>Guide d'etude DOTA hors ligne</h1><p>Parcours de 8 heures, detection, YOLO-OBB, causalite, resultats, questions orales et exercices corriges.</p></header><nav><a href="#doc-readme">Pack d&#x27;etude hors ligne - projet DOTA</a><a href="#doc-01-projet-de-bout-en-bout">Le projet DOTA de bout en bout</a><a href="#doc-02-detection-yolo-obb">Detection, YOLO et boites orientees</a><a href="#doc-03-causalite-appliquee">Causalite appliquee aux erreurs du detecteur</a><a href="#doc-04-resultats-et-interpretation">Resultats reels et interpretation defendable</a><a href="#doc-05-exercices-sans-corrige">Exercices sans corrige</a><a href="#doc-06-questions-orales">Questions orales avec reponses courtes</a><a href="#doc-07-corrige">Corrige des exercices</a><a href="#doc-concepts-oraux-ml-causalite">Concepts oraux a maitriser - ML, detection, causalite</a></nav><main><section class="document" id="doc-readme"><div class="source-label">README.md</div><h1>Pack d'etude hors ligne - projet DOTA</h1>
+<p>Ce dossier est concu pour un vol de 8 heures sans Internet. Il ne faut pas
+tout lire passivement. Le but est de pouvoir expliquer le projet, refaire les
+raisonnements essentiels et reconnaitre les limites methodologiques.</p>
+<h2>Avant de couper Internet</h2>
+<ol>
+<li>Ouvrir ce fichier et verifier que les liens fonctionnent.</li>
+<li>Ouvrir <code>projet_dota.ipynb</code> avec le noyau <code>Python (DOTA GPU)</code>.</li>
+<li>Executer :</li>
+</ol>
+<pre><code class="language-powershell">.\.venv_gpu\Scripts\python.exe scripts\verify_offline_ready.py
+</code></pre>
+<ol start="4">
+<li>Garder le dossier du projet sur le disque local.</li>
+<li>Brancher le chargeur si un entrainement doit etre relance.</li>
+</ol>
+<p>Le modele de base <code>yolo26n.pt</code>, l'environnement <code>.venv_gpu</code>, les donnees
+preparees et les poids entraines sont deja locaux. Ils sont volontairement
+ignores par Git parce qu'ils sont volumineux.</p>
+<h2>Methode de travail pour chaque bloc</h2>
+<p>Utiliser toujours le meme cycle :</p>
+<ol>
+<li>Fermer le document et repondre de memoire aux questions de depart.</li>
+<li>Lire seulement ce qui manque.</li>
+<li>Expliquer le concept a voix basse en 20 secondes.</li>
+<li>Faire un mini-exercice sans regarder la correction.</li>
+<li>Noter <code>0</code>, <code>1</code> ou <code>2</code> :<ul>
+<li><code>0</code> : je bloque ;</li>
+<li><code>1</code> : je comprends avec de l'aide ;</li>
+<li><code>2</code> : je peux l'expliquer avec un exemple et une limite.</li>
+</ul>
+</li>
+</ol>
+<p>Une notion n'est pas maitrisee parce qu'elle semble familiere. Elle est
+maitrisee quand la reponse sort sans support.</p>
+<h2>Programme principal de 8 heures</h2>
+<p>Chaque bloc dure 50 minutes, suivi de 10 minutes de pause. Les pauses font
+partie du programme : elles evitent de confondre fatigue et incomprehension.</p>
+<h3>Heure 1 - Carte du projet et du bareme</h3>
+<ul>
+<li>Lire <a href="#doc-01-projet-de-bout-en-bout">01_projet_de_bout_en_bout.md</a>.</li>
+<li>Dessiner de memoire le pipeline : images brutes -&gt; tuiles -&gt; labels -&gt;
+entrainement -&gt; predictions -&gt; metriques -&gt; table causale -&gt; effets.</li>
+<li>Associer chaque etape aux six questions du sujet.</li>
+<li>Expliquer pourquoi le split est fait par image source et non par tuile.</li>
+</ul>
+<p>Livrable personnel : une page manuscrite contenant le pipeline et les six
+questions.</p>
+<h3>Heure 2 - Detection, IoU et metriques</h3>
+<ul>
+<li>Etudier les cartes 1 a 6 de <code>concepts_oraux_ml_causalite.md</code>.</li>
+<li>Lire les sections IoU, matching, precision, recall, AP et mAP dans
+<a href="#doc-02-detection-yolo-obb">02_detection_yolo_obb.md</a>.</li>
+<li>Faire les exercices D1 a D6 de
+<a href="#doc-05-exercices-sans-corrige">05_exercices_sans_corrige.md</a>.</li>
+</ul>
+<p>Livrable personnel : expliquer la difference entre une prediction confiante et
+une prediction correcte.</p>
+<h3>Heure 3 - YOLO, OBB et entrainement</h3>
+<ul>
+<li>Etudier les cartes 7 et 8 de <code>concepts_oraux_ml_causalite.md</code>.</li>
+<li>Revoir backbone, neck, head, loss, transfert learning et NMS.</li>
+<li>Comparer HBB et OBB sans dire qu'OBB est automatiquement meilleur.</li>
+<li>Lire dans le notebook les cellules de la question 3.</li>
+</ul>
+<p>Livrable personnel : reponse de 90 secondes a &quot;Pourquoi YOLO-OBB pour DOTA ?&quot;.</p>
+<h3>Heure 4 - Tuilage, donnees et reproductibilite</h3>
+<ul>
+<li>Relire la partie pipeline de
+<a href="#doc-01-projet-de-bout-en-bout">01_projet_de_bout_en_bout.md</a>.</li>
+<li>Examiner <code>preparation_summary.json</code> et les manifestes CSV.</li>
+<li>Repondre aux questions sur les fragments de bord, les tuiles negatives, les
+classes rares et la stratification.</li>
+<li>Faire les exercices P1 a P6.</li>
+</ul>
+<p>Livrable personnel : defendre les choix 1024 pixels, stride 824 en train et
+stride 1024 en validation.</p>
+<h3>Heure 5 - DAG et vocabulaire causal</h3>
+<ul>
+<li>Lire <a href="#doc-03-causalite-appliquee">03_causalite_appliquee.md</a> jusqu'a la
+section sur les hypotheses d'identification.</li>
+<li>Refaire les DAG <code>smoking -&gt; cancer</code> et DOTA sans regarder.</li>
+<li>Classer chaque variable comme traitement, outcome, confounder, mediator,
+collider ou variable de precision.</li>
+<li>Faire les exercices C1 a C7.</li>
+</ul>
+<p>Livrable personnel : expliquer pourquoi correlation n'est pas causalite avec
+un exemple DOTA.</p>
+<h3>Heure 6 - Estimation causale</h3>
+<ul>
+<li>Etudier regression ajustee, score de propension, IPW, g-computation et AIPW.</li>
+<li>Comprendre le role du cross-fitting et du bootstrap groupe par image.</li>
+<li>Etudier l'arbre causal et la foret sur pseudo-outcomes.</li>
+<li>Faire les exercices C8 a C14.</li>
+</ul>
+<p>Livrable personnel : comparer AIPW et difference brute en moins d'une minute.</p>
+<h3>Heure 7 - Resultats reels et limites</h3>
+<ul>
+<li>Lire <a href="#doc-04-resultats-et-interpretation">04_resultats_et_interpretation.md</a>.</li>
+<li>Ouvrir les figures dans <code>outputs/analysis/</code>.</li>
+<li>Trouver trois constats predictifs, deux constats causaux et cinq limites.</li>
+<li>Verifier que chaque conclusion est soutenue par une mesure.</li>
+</ul>
+<p>Livrable personnel : une conclusion de deux minutes sans confondre mAP et
+effet causal.</p>
+<h3>Heure 8 - Simulation orale et examen</h3>
+<ul>
+<li>Utiliser <a href="#doc-06-questions-orales">06_questions_orales.md</a>.</li>
+<li>Tirer 20 questions au hasard.</li>
+<li>Repondre d'abord sans support, puis corriger.</li>
+<li>Faire le mini-examen final de
+<a href="#doc-05-exercices-sans-corrige">05_exercices_sans_corrige.md</a>.</li>
+<li>Consulter <a href="#doc-07-corrige">07_corrige.md</a> seulement a la fin.</li>
+</ul>
+<p>Livrable personnel : liste des cinq notions qui restent fragiles.</p>
+<h2>Parcours reduit de 3 heures</h2>
+<p>Si la fatigue est forte :</p>
+<ol>
+<li>Heure 1 : carte du projet, tuilage, HBB vs OBB.</li>
+<li>Heure 2 : IoU, precision, recall, mAP, DAG, confounder, collider.</li>
+<li>Heure 3 : resultats reels, limites et 15 questions orales.</li>
+</ol>
+<p>Ne pas sacrifier les limites. Une reponse prudente et rigoureuse vaut mieux
+qu'une affirmation forte non defendable.</p>
+<h2>Index des ressources</h2>
+<ul>
+<li><a href="#doc-01-projet-de-bout-en-bout">01_projet_de_bout_en_bout.md</a> : fil complet
+du projet et correspondance avec le bareme.</li>
+<li><a href="#doc-02-detection-yolo-obb">02_detection_yolo_obb.md</a> : detection, YOLO,
+metriques, entrainement et erreurs.</li>
+<li><a href="#doc-03-causalite-appliquee">03_causalite_appliquee.md</a> : DAG, identification,
+estimateurs et heterogeneite.</li>
+<li><a href="#doc-04-resultats-et-interpretation">04_resultats_et_interpretation.md</a> :
+chiffres et figures produits par l'experience.</li>
+<li><a href="#doc-05-exercices-sans-corrige">05_exercices_sans_corrige.md</a> : exercices.</li>
+<li><a href="#doc-06-questions-orales">06_questions_orales.md</a> : questions courtes.</li>
+<li><a href="#doc-07-corrige">07_corrige.md</a> : solutions separees.</li>
+<li><code>flashcards.csv</code> : cartes importables dans Anki ou lisibles dans un tableur.</li>
+<li><code>concepts_oraux_ml_causalite.md</code> : cartes orales detaillees deja commencees.</li>
+</ul>
+<h2>Grille finale d'auto-evaluation</h2>
+<table>
+<thead>
+<tr>
+  <th>Bloc</th>
+  <th style="text-align:right">Score avant</th>
+  <th style="text-align:right">Score apres</th>
+  <th>Preuve de maitrise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Pipeline complet</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je le dessine sans support</td>
+</tr>
+<tr>
+  <td>Tuilage et fuite</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je justifie le split par image</td>
+</tr>
+<tr>
+  <td>IoU, AP, mAP</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je donne formules et limites</td>
+</tr>
+<tr>
+  <td>YOLO et OBB</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je relie architecture et DOTA</td>
+</tr>
+<tr>
+  <td>DAG</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je distingue les types de noeuds</td>
+</tr>
+<tr>
+  <td>AIPW</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je compare aux methodes simples</td>
+</tr>
+<tr>
+  <td>Arbre causal</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>J'explique heterogeneite et prudence</td>
+</tr>
+<tr>
+  <td>Resultats reels</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>Je cite des chiffres exacts</td>
+</tr>
+<tr>
+  <td>Limites</td>
+  <td style="text-align:right"></td>
+  <td style="text-align:right"></td>
+  <td>J'en explique au moins cinq</td>
+</tr>
+</tbody>
+</table>
+</section><section class="document" id="doc-01-projet-de-bout-en-bout"><div class="source-label">01_projet_de_bout_en_bout.md</div><h1>Le projet DOTA de bout en bout</h1>
+<h2>Le probleme en une phrase</h2>
+<p>Le projet doit localiser et classifier des objets dans de grandes images
+aeriennes, puis etudier causalement si le fait qu'un objet soit tres petit
+reduit sa probabilite d'etre correctement detecte.</p>
+<p>Il contient donc deux problemes differents :</p>
+<ul>
+<li>probleme predictif : ou sont les objets et quelle est leur classe ?</li>
+<li>probleme causal : quel serait l'effet du traitement &quot;objet tres petit&quot; sur
+la detection, apres ajustement sur des differences observables pertinentes ?</li>
+</ul>
+<p>Une bonne performance predictive ne prouve pas un effet causal.</p>
+<h2>Le pipeline a savoir dessiner</h2>
+<pre><code class="language-text">DOTA-v1.0 brut
+    |
+    +-- images train et validation separees
+    +-- annotations OBB a 8 coordonnees
+    +-- source, GSD, difficult
+    |
+    v
+Audit et variables derivees
+    |
+    +-- aire, ratio de forme, orientation
+    +-- densite, classe dominante, type de scene
+    +-- controles de validite
+    |
+    v
+Selection stratifiee par image source
+    |
+    +-- 180 images train
+    +-- 60 images validation
+    +-- 15 classes couvertes
+    |
+    v
+Tuilage 1024 x 1024
+    |
+    +-- train : stride 824, augmentation de couverture
+    +-- validation : stride 1024, evaluation moins redondante
+    +-- fragments ambigus rejetes
+    +-- tuiles negatives echantillonnees
+    |
+    +---------------------+
+    |                     |
+    v                     v
+labels HBB             labels OBB
+    |                     |
+    v                     v
+YOLO26n HBB            YOLO26n OBB
+baseline               modele principal
+    |                     |
+    +----------+----------+
+               |
+               v
+Evaluation validation
+    |
+    +-- precision, recall, mAP50, mAP50-95
+    +-- AP par classe
+    +-- predictions visuelles
+    +-- performance par taille et orientation
+               |
+               v
+Matching OBB prediction-verite terrain
+               |
+               v
+Table causale unique par objet
+    |
+    +-- D : tres petit
+    +-- Y : classe correcte et IoU &gt;= 0.50
+    +-- X : classe, orientation, densite, source, GSD,
+            ratio de forme, position du centre dans la tuile
+               |
+               v
+Difference brute, g-computation, IPW, AIPW
+               |
+               v
+Arbre causal honnete + foret sur pseudo-outcomes
+               |
+               v
+Interpretation, incertitude, sensibilite et limites
+</code></pre>
+<h2>Pourquoi utiliser un sous-ensemble ?</h2>
+<p>DOTA est volumineux et les images sont grandes. Un sous-ensemble permet :</p>
+<ul>
+<li>une experience executable sur une RTX 4060 de 8 Go ;</li>
+<li>plusieurs modeles et controles dans un temps realiste ;</li>
+<li>une analyse causale par objet sans plusieurs jours de calcul ;</li>
+<li>une reproduction pedagogique.</li>
+</ul>
+<p>Ce choix est acceptable seulement si la selection est defendable. Ici elle
+est faite au niveau de l'image, avec couverture des 15 classes et une strate
+<code>classe dominante x densite</code>. Les classes rares restent rares : le projet ne
+pretend pas que la stratification annule le desequilibre.</p>
+<h2>Pourquoi selectionner avant de tuiler ?</h2>
+<p>Si on tuile d'abord puis qu'on repartit les tuiles au hasard, deux tuiles de la
+meme image peuvent se retrouver dans train et validation. Elles partagent le
+meme paysage, la meme texture, la meme source et parfois les memes objets.</p>
+<p>Le modele pourrait reconnaitre le contexte plutot que generaliser. La metrique
+de validation serait alors trop optimiste.</p>
+<p>La bonne unite de separation est l'image source. Toutes ses tuiles restent dans
+le meme split.</p>
+<h2>Choix de tuilage</h2>
+<h3>Taille 1024</h3>
+<p>Une tuile de 1024 pixels :</p>
+<ul>
+<li>est beaucoup plus petite qu'une image DOTA complete ;</li>
+<li>conserve assez de contexte autour des objets ;</li>
+<li>reste compatible avec la memoire GPU ;</li>
+<li>permet ensuite un redimensionnement vers 640 ou 1024 pour YOLO.</li>
+</ul>
+<p>Une tuile trop petite coupe plus d'objets et perd le contexte. Une tuile trop
+grande reduit les objets minuscules lors du redimensionnement et augmente le
+cout memoire.</p>
+<h3>Stride 824 en train</h3>
+<p>Le chevauchement de 200 pixels augmente la probabilite qu'un objet proche d'un
+bord apparaisse entier dans au moins une tuile. Cela enrichit le train, mais
+peut dupliquer un objet. Le manifeste conserve <code>object_id</code> et
+<code>tile_instances_for_object</code> pour rendre cette duplication visible.</p>
+<h3>Stride 1024 en validation</h3>
+<p>La validation doit etre la moins redondante possible. Un stride sans
+chevauchement est donc prefere. Une derniere position est ajoutee pour couvrir
+le bord final de l'image, ce qui peut creer un petit chevauchement. Pour
+l'analyse causale, une seule instance est choisie par objet original.</p>
+<h2>Gestion des objets aux bords</h2>
+<p>Pour chaque objet, on calcule la fraction de son aire conservee dans la tuile :</p>
+<ul>
+<li>fraction &gt;= 0.70 : objet garde ;</li>
+<li>fraction entre 0.20 et 0.70 : tuile rejetee car le fragment est ambigu ;</li>
+<li>fraction &lt; 0.20 : fragment ignore.</li>
+</ul>
+<p>Si un objet partiellement coupe est garde, son intersection avec la tuile est
+approximee par une nouvelle boite orientee minimale. Les coordonnees sont
+ensuite clippees et normalisees entre 0 et 1.</p>
+<p>Ce choix reduit les labels trompeurs. Sa limite est qu'il elimine des tuiles et
+modifie la distribution des objets proches des bords.</p>
+<h2>Pourquoi garder des tuiles negatives ?</h2>
+<p>Une tuile negative ne contient aucun objet annote. Sans tuiles negatives, le
+modele apprendrait surtout que toute image contient forcement un objet. Un
+echantillon de negatives lui apprend le fond et aide a reduire les faux
+positifs.</p>
+<p>On ne garde pas toutes les tuiles vides parce qu'elles domineraient le dataset
+et augmenteraient fortement le temps d'entrainement.</p>
+<h2>Deux representations, memes images</h2>
+<h3>HBB</h3>
+<p>La boite horizontale est derivee du minimum et maximum des quatre coins :</p>
+<pre><code class="language-text">xmin = min(x1, x2, x3, x4)
+xmax = max(x1, x2, x3, x4)
+ymin = min(y1, y2, y3, y4)
+ymax = max(y1, y2, y3, y4)
+</code></pre>
+<p>Le label YOLO contient classe, centre x, centre y, largeur et hauteur. Cette
+representation est simple, mais englobe souvent du fond pour un objet diagonal.</p>
+<h3>OBB</h3>
+<p>Le label contient la classe et les quatre coins normalises. Il respecte mieux
+la geometrie DOTA et permet une IoU orientee.</p>
+<h3>Pourquoi la comparaison est equitable</h3>
+<ul>
+<li>memes images sources ;</li>
+<li>memes tuiles ;</li>
+<li>memes splits ;</li>
+<li>meme graine ;</li>
+<li>meme famille YOLO26n ;</li>
+<li>meme pre-entrainement COCO du backbone ;</li>
+<li>aucune initialisation OBB deja entrainee sur DOTA.</li>
+</ul>
+<p>La tete OBB est differente par necessite. La comparaison mesure donc surtout
+l'effet pratique de la representation et de la tete orientee dans ce protocole.</p>
+<h2>Ce que fait chaque fichier de code</h2>
+<h3><code>src/dota_pipeline.py</code></h3>
+<ul>
+<li>lit les annotations DOTA ;</li>
+<li>calcule les variables derivees ;</li>
+<li>selectionne les images ;</li>
+<li>decoupe et annote les tuiles ;</li>
+<li>produit simultanement HBB et OBB ;</li>
+<li>valide les labels et la separation.</li>
+</ul>
+<h3><code>scripts/prepare_experiment.py</code></h3>
+<p>Point d'entree pour construire le dataset experimental.</p>
+<h3><code>scripts/train_models.py</code></h3>
+<p>Entraine HBB ou OBB, protege les anciens runs, permet une reprise depuis
+<code>last.pt</code> et enregistre les metadonnees de reproductibilite.</p>
+<h3><code>src/experiment_analysis.py</code></h3>
+<ul>
+<li>calcule l'IoU polygonale ;</li>
+<li>associe predictions et objets par classe ;</li>
+<li>choisit une instance unique par objet ;</li>
+<li>estime les effets par plusieurs methodes ;</li>
+<li>construit l'arbre et la foret d'effets.</li>
+</ul>
+<h3><code>scripts/evaluate_experiment.py</code></h3>
+<p>Orchestre les evaluations, construit la table causale, genere les CSV, JSON et
+figures finales.</p>
+<h3><code>scripts/verify_offline_ready.py</code></h3>
+<p>Controle que l'environnement de vol contient tout le necessaire.</p>
+<h2>Correspondance avec les six questions</h2>
+<table>
+<thead>
+<tr>
+  <th>Question</th>
+  <th>Reponse du projet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Q1 Exploration</td>
+  <td>classes, difficult, dimensions, aires, orientations, visualisations et choix d'algorithmes</td>
+</tr>
+<tr>
+  <td>Q2 Pretraitement</td>
+  <td>selection stratifiee, tuilage, nettoyage, HBB/OBB, variables derivees et manifeste</td>
+</tr>
+<tr>
+  <td>Q3 Prediction</td>
+  <td>baseline HBB, modele OBB, metriques globales/par classe et exemples</td>
+</tr>
+<tr>
+  <td>Q4 Causalite</td>
+  <td>D, Y, X, DAG, hypotheses et estimand</td>
+</tr>
+<tr>
+  <td>Q5 Estimation</td>
+  <td>brut, g-computation, IPW, AIPW, arbre/foret, IC et sensibilite</td>
+</tr>
+<tr>
+  <td>Q6 Conclusion</td>
+  <td>interpretation separee, limites, figures et reproductibilite</td>
+</tr>
+</tbody>
+</table>
+<h2>Questions de rappel</h2>
+<p>Repondre sans regarder le texte :</p>
+<ol>
+<li>Pourquoi le split doit-il preceder le tuilage ?</li>
+<li>Pourquoi un stride plus petit est-il utilise en train ?</li>
+<li>Pourquoi ne pas garder tous les fragments de bord ?</li>
+<li>Pourquoi conserver des tuiles negatives ?</li>
+<li>Pourquoi HBB est-il une baseline utile mais imparfaite ?</li>
+<li>Pourquoi ne pas initialiser OBB avec des poids deja ajustes sur DOTA ?</li>
+<li>Pourquoi une instance unique est-elle choisie pour l'analyse causale ?</li>
+<li>Quelle colonne relie une instance tuilee a l'objet original ?</li>
+<li>Quelle partie du pipeline produit l'outcome causal ?</li>
+<li>Pourquoi un bon mAP ne suffit-il pas pour Q5 ?</li>
+</ol>
+</section><section class="document" id="doc-02-detection-yolo-obb"><div class="source-label">02_detection_yolo_obb.md</div><h1>Detection, YOLO et boites orientees</h1>
+<h2>1. Detection n'est pas classification</h2>
+<p>Un classifieur global produit une classe pour l'image entiere. Un detecteur
+produit plusieurs objets :</p>
+<pre><code class="language-text">(classe, score de confiance, geometrie de boite)
+</code></pre>
+<p>Dans DOTA, une image peut contenir des centaines d'objets de plusieurs classes.
+Un classifieur global perdrait leur position et leur nombre. Il est donc
+inadapte a l'etat brut.</p>
+<p>Reponse orale en 20 secondes :</p>
+<blockquote>
+<p>La classification dit principalement ce que contient une image. La detection
+doit aussi dire ou se trouve chaque objet, et DOTA peut en contenir beaucoup.
+Il faut donc predire plusieurs classes et plusieurs boites par image.</p>
+</blockquote>
+<h2>2. Representation d'une boite</h2>
+<h3>HBB</h3>
+<p>Une HBB reste alignee avec les axes. Elle est souvent representee par :</p>
+<pre><code class="language-text">(x_centre, y_centre, largeur, hauteur)
+</code></pre>
+<h3>OBB</h3>
+<p>Une OBB peut tourner. Dans les labels Ultralytics utilises ici :</p>
+<pre><code class="language-text">classe x1 y1 x2 y2 x3 y3 x4 y4
+</code></pre>
+<p>Les coordonnees sont normalisees par la taille de la tuile.</p>
+<h3>Perte lors de la conversion</h3>
+<p>La HBB d'un objet diagonal couvre l'objet plus une zone de fond. Deux objets
+orientes et proches peuvent aussi produire des HBB qui se chevauchent beaucoup,
+meme si leurs OBB sont bien separees.</p>
+<p>Cette perte peut diminuer la precision de localisation et rendre la NMS plus
+agressive dans les scenes denses.</p>
+<h2>3. IoU</h2>
+<p>Formule :</p>
+<pre><code class="language-text">IoU = aire(intersection) / aire(union)
+</code></pre>
+<p>Proprietes :</p>
+<ul>
+<li>IoU = 1 : superposition parfaite ;</li>
+<li>IoU = 0 : aucune intersection ;</li>
+<li>bonne classe avec IoU faible : localisation incorrecte ;</li>
+<li>IoU ne mesure pas directement la confiance ou la calibration.</li>
+</ul>
+<p>Pour OBB, l'intersection doit respecter la rotation. Calculer seulement l'IoU
+des HBB autour de deux OBB peut surestimer leur chevauchement.</p>
+<h3>Mini-calcul</h3>
+<p>Deux rectangles de surface 100 se chevauchent sur une surface 40 :</p>
+<pre><code class="language-text">union = 100 + 100 - 40 = 160
+IoU = 40 / 160 = 0.25
+</code></pre>
+<p>Le piege classique est de diviser par la somme 200 sans retirer l'intersection
+comptee deux fois.</p>
+<h2>4. Matching prediction-verite terrain</h2>
+<p>Il ne suffit pas de calculer chaque IoU independamment. Une prediction ne doit
+pas valider plusieurs objets.</p>
+<p>Le pipeline :</p>
+<ol>
+<li>separe les objets par classe ;</li>
+<li>calcule une matrice d'IoU ;</li>
+<li>applique une association un-a-un qui maximise l'IoU totale ;</li>
+<li>marque un objet correct si la classe est la meme, la confiance suffisante
+et l'IoU au-dessus du seuil.</li>
+</ol>
+<p>Cette association evite de compter deux fois une unique detection.</p>
+<h2>5. TP, FP et FN</h2>
+<ul>
+<li>TP : prediction associee a un objet de meme classe avec IoU suffisante.</li>
+<li>FP : prediction non associee correctement.</li>
+<li>FN : objet reel sans prediction correcte.</li>
+</ul>
+<p>Une mauvaise classe produit generalement un FP pour la classe predite et un FN
+pour la vraie classe.</p>
+<p>Une boite de bonne classe mais mal placee produit aussi un FP et un FN selon la
+regle d'evaluation.</p>
+<h2>6. Precision, recall et F1</h2>
+<pre><code class="language-text">precision = TP / (TP + FP)
+recall    = TP / (TP + FN)
+F1        = 2 * precision * recall / (precision + recall)
+</code></pre>
+<p>Interpretation :</p>
+<ul>
+<li>precision : fiabilite des detections annoncees ;</li>
+<li>recall : couverture des objets reels ;</li>
+<li>F1 : compromis pour un seuil de confiance donne.</li>
+</ul>
+<p>Le seuil de confiance change le compromis. Un seuil eleve elimine des
+detections incertaines : souvent precision augmente et recall diminue.</p>
+<h2>7. AP et mAP</h2>
+<p>Pour une classe :</p>
+<ol>
+<li>trier les predictions par confiance ;</li>
+<li>faire varier le seuil ;</li>
+<li>calculer les couples precision-recall ;</li>
+<li>mesurer l'aire sous la courbe precision-recall : AP.</li>
+</ol>
+<p>La mAP est la moyenne des AP sur les classes.</p>
+<h3>mAP50</h3>
+<p>Une prediction est localement correcte a partir d'une IoU de 0.50. Cette
+metrique est relativement tolerante.</p>
+<h3>mAP50-95</h3>
+<p>On moyenne l'AP pour des seuils IoU de 0.50 a 0.95 par pas de 0.05. Elle
+penalise plus fortement les boites imprecises.</p>
+<p>Si mAP50 est nettement plus haute que mAP50-95, le modele reconnait parfois
+l'objet mais la localisation precise reste difficile.</p>
+<h3>Limite de la moyenne</h3>
+<p>Chaque classe contribue a la mAP, mais une seule valeur masque :</p>
+<ul>
+<li>les classes rares ;</li>
+<li>les objets minuscules ;</li>
+<li>les orientations extremes ;</li>
+<li>les scenes tres denses ;</li>
+<li>les sources d'image difficiles.</li>
+</ul>
+<p>Il faut donc aussi etudier AP par classe et performance par sous-groupe.</p>
+<h2>8. Score de confiance</h2>
+<p>Le score sert a classer et filtrer les detections. Il n'est pas une garantie de
+verite et n'est pas automatiquement une probabilite bien calibree.</p>
+<p>Trois dimensions restent distinctes :</p>
+<ul>
+<li>classe correcte ;</li>
+<li>geometrie correcte ;</li>
+<li>confiance elevee.</li>
+</ul>
+<p>Une prediction peut etre tres confiante et fausse.</p>
+<h2>9. NMS</h2>
+<p>La Non-Maximum Suppression retire les boites redondantes :</p>
+<ol>
+<li>garder la boite la plus confiante ;</li>
+<li>comparer son IoU aux autres ;</li>
+<li>supprimer les boites trop chevauchantes ;</li>
+<li>continuer.</li>
+</ol>
+<p>Dans une scene dense, une NMS trop agressive peut supprimer un vrai voisin.
+Avec OBB, une NMS orientee distingue mieux certains objets diagonaux proches.</p>
+<h2>10. YOLO en une vue</h2>
+<p>YOLO traite l'image dans un passage principal du reseau et produit de nombreux
+candidats de detection.</p>
+<h3>Backbone</h3>
+<p>Extrait des motifs visuels de complexite croissante :</p>
+<ul>
+<li>bords et textures dans les premieres couches ;</li>
+<li>formes et parties d'objets plus loin.</li>
+</ul>
+<h3>Neck</h3>
+<p>Combine plusieurs echelles de features. C'est crucial pour DOTA :</p>
+<ul>
+<li>grandes structures comme les terrains ;</li>
+<li>petits vehicules de quelques pixels.</li>
+</ul>
+<h3>Head</h3>
+<p>Produit les classes, scores et parametres de boites. La tete OBB doit aussi
+representer l'orientation.</p>
+<p>Reponse orale :</p>
+<blockquote>
+<p>Le backbone extrait les caracteristiques, le neck combine plusieurs echelles
+et la head transforme ces caracteristiques en classes, confiances et boites.
+Pour DOTA, le multi-echelle et la tete orientee sont particulierement utiles.</p>
+</blockquote>
+<h2>11. Loss et optimisation</h2>
+<p>La loss d'entrainement combine plusieurs erreurs, notamment :</p>
+<ul>
+<li>erreur de localisation ;</li>
+<li>erreur de classification ;</li>
+<li>erreur liee aux scores ;</li>
+<li>composante d'angle pour OBB.</li>
+</ul>
+<p>La retropropagation calcule comment chaque poids contribue a cette erreur.
+L'optimiseur met ensuite les poids a jour.</p>
+<p>Attention :</p>
+<ul>
+<li>loss train basse ne garantit pas la generalisation ;</li>
+<li>mAP validation est une metrique d'evaluation, pas la loss ;</li>
+<li>une hausse de la performance train avec stagnation validation suggere un
+overfitting.</li>
+</ul>
+<h2>12. Epoch, batch et learning rate</h2>
+<h3>Epoch</h3>
+<p>Un passage approximatif sur tout le train. Davantage d'epochs donne plus
+d'occasions d'apprendre, mais peut mener a l'overfitting.</p>
+<h3>Batch</h3>
+<p>Nombre d'images traitees avant une mise a jour des poids. Un grand batch utilise
+plus de memoire et donne un gradient souvent moins bruite.</p>
+<h3>Learning rate</h3>
+<p>Amplitude des mises a jour :</p>
+<ul>
+<li>trop grand : apprentissage instable ;</li>
+<li>trop petit : apprentissage lent ou bloque ;</li>
+<li>scheduler : le fait varier pendant l'entrainement.</li>
+</ul>
+<h2>13. Transfert learning</h2>
+<p>Le backbone part de poids appris sur COCO. Il connait deja des motifs visuels
+generaux, puis il est ajuste sur DOTA.</p>
+<p>Dans cette experience, HBB et OBB utilisent le meme point de depart COCO autant
+que leur architecture le permet. Aucun poids OBB deja ajuste sur DOTA n'est
+utilise. Sinon OBB aurait un avantage experimental difficile a interpreter.</p>
+<h2>14. Augmentations</h2>
+<p>Les augmentations changent les exemples train sans toucher a la validation :</p>
+<ul>
+<li>couleur et luminosite ;</li>
+<li>translation et echelle ;</li>
+<li>mosaics ;</li>
+<li>retournement horizontal.</li>
+</ul>
+<p>Elles peuvent ameliorer la generalisation. Elles doivent transformer
+correctement les boites. Une augmentation visuelle dont les labels ne suivent
+pas rend l'entrainement faux.</p>
+<p>Une augmentation d'une image train reste train. Elle ne doit jamais migrer en
+validation.</p>
+<h2>15. Petits objets</h2>
+<p>Les petits objets sont difficiles parce que :</p>
+<ul>
+<li>ils contiennent peu de pixels ;</li>
+<li>le redimensionnement les reduit encore ;</li>
+<li>leurs bords sont sensibles a une erreur de quelques pixels ;</li>
+<li>ils apparaissent souvent dans des zones denses ;</li>
+<li>une petite erreur absolue produit une forte baisse d'IoU.</li>
+</ul>
+<p>Ameliorations possibles :</p>
+<ul>
+<li>augmenter <code>imgsz</code> ;</li>
+<li>utiliser des tuiles adaptees ;</li>
+<li>garder un neck multi-echelle ;</li>
+<li>entrainer plus longtemps ;</li>
+<li>sur-echantillonner avec prudence les scenes utiles ;</li>
+<li>analyser le seuil de confiance et <code>max_det</code>.</li>
+</ul>
+<h2>16. Desequilibre de classes</h2>
+<p>Un grand nombre de <code>small-vehicle</code> ne compense pas le manque de <code>helicopter</code>.
+Une metrique globale peut etre dominee par les classes faciles ou frequentes.</p>
+<p>Controles :</p>
+<ul>
+<li>couverture de toutes les classes ;</li>
+<li>AP par classe ;</li>
+<li>exemples d'erreurs pour classes rares ;</li>
+<li>limites explicites ;</li>
+<li>eventuellement ponderation ou sur-echantillonnage, sans fabriquer de
+validation artificielle.</li>
+</ul>
+<h2>17. Overfitting et underfitting</h2>
+<h3>Underfitting</h3>
+<ul>
+<li>loss encore elevee ;</li>
+<li>train et validation faibles ;</li>
+<li>modele, resolution ou duree insuffisants.</li>
+</ul>
+<h3>Overfitting</h3>
+<ul>
+<li>train continue de s'ameliorer ;</li>
+<li>validation stagne ou baisse ;</li>
+<li>ecart train-validation grand.</li>
+</ul>
+<h3>Early stopping</h3>
+<p>Arrete apres une periode sans amelioration. Il economise du calcul, mais ne
+remplace pas l'analyse des courbes.</p>
+<h2>18. Pourquoi HBB peut parfois sembler meilleure</h2>
+<p>OBB est mieux adaptee geometriquement, mais elle doit apprendre un probleme plus
+complexe. Avec peu d'epochs ou peu de donnees :</p>
+<ul>
+<li>la tete OBB a plus a apprendre ;</li>
+<li>l'angle ajoute une source d'erreur ;</li>
+<li>l'optimisation peut demander plus de temps ;</li>
+<li>la metrique orientee est plus stricte.</li>
+</ul>
+<p>Une baseline HBB superieure dans un protocole court ne prouve donc pas que les
+orientations sont inutiles. Il faut interpreter donnees, duree, resolution et
+metrique ensemble.</p>
+<h2>19. Checklist d'analyse d'une courbe</h2>
+<p>Pour chaque run :</p>
+<ol>
+<li>Combien d'epochs ont reellement fini ?</li>
+<li>Quelle epoque a produit <code>best.pt</code> ?</li>
+<li>Les losses train baissent-elles ?</li>
+<li>mAP validation augmente-t-elle encore ?</li>
+<li>Precision et recall sont-elles desequilibrees ?</li>
+<li>Les classes rares ont-elles une AP presque nulle ?</li>
+<li>Le meilleur modele est-il la derniere epoque ?</li>
+<li>L'early stopping s'est-il active ?</li>
+<li>La resolution et <code>max_det</code> sont-ils adaptes aux scenes denses ?</li>
+<li>Les exemples visuels confirment-ils les chiffres ?</li>
+</ol>
+<h2>20. Questions de rappel rapide</h2>
+<ol>
+<li>Pourquoi une bonne classe ne suffit-elle pas pour un TP ?</li>
+<li>Pourquoi l'union retire-t-elle l'intersection une fois ?</li>
+<li>Comment une prediction peut-elle creer a la fois FP et FN ?</li>
+<li>Que change le seuil de confiance ?</li>
+<li>Quelle difference entre AP et mAP ?</li>
+<li>Pourquoi mAP50-95 est-elle plus stricte ?</li>
+<li>Quel est le risque d'une NMS forte dans un parking ?</li>
+<li>Quel role joue le neck ?</li>
+<li>Pourquoi le transfert learning aide-t-il ?</li>
+<li>Pourquoi <code>imgsz=1024</code> peut aider les petits objets ?</li>
+<li>Pourquoi peut-il aussi ralentir l'entrainement ?</li>
+<li>Pourquoi OBB n'est-elle pas garantie de battre HBB ?</li>
+<li>Quelle metrique montre surtout les objets manques ?</li>
+<li>Pourquoi faut-il AP par classe ?</li>
+<li>Comment reconnaitre un overfitting ?</li>
+</ol>
+</section><section class="document" id="doc-03-causalite-appliquee"><div class="source-label">03_causalite_appliquee.md</div><h1>Causalite appliquee aux erreurs du detecteur</h1>
+<h2>1. Prediction, association et causalite</h2>
+<h3>Prediction</h3>
+<p>Question :</p>
+<blockquote>
+<p>Peut-on predire si cet objet sera correctement detecte ?</p>
+</blockquote>
+<p>Une forte performance predictive signifie que les variables disponibles
+contiennent de l'information sur l'outcome. Elle ne dit pas ce qui arriverait
+si on changeait une variable.</p>
+<h3>Association</h3>
+<p>Question :</p>
+<blockquote>
+<p>Le taux de detection est-il different entre petits et grands objets ?</p>
+</blockquote>
+<p>Une difference observee peut venir de la taille, mais aussi des classes, de la
+resolution, de la densite, de la source ou d'autres facteurs.</p>
+<h3>Causalite</h3>
+<p>Question :</p>
+<blockquote>
+<p>Pour des objets comparables, que deviendrait la probabilite de detection si
+l'objet etait dans la condition &quot;tres petit&quot; plutot que &quot;non tres petit&quot; ?</p>
+</blockquote>
+<p>Cette question compare deux mondes potentiels. Un seul est observe pour chaque
+objet. L'autre est contrefactuel.</p>
+<h2>2. Cadre des outcomes potentiels</h2>
+<p>Pour l'objet <code>i</code> :</p>
+<pre><code class="language-text">Y_i(1) = outcome si l'objet est tres petit
+Y_i(0) = outcome si l'objet n'est pas tres petit
+</code></pre>
+<p>Effet individuel :</p>
+<pre><code class="language-text">tau_i = Y_i(1) - Y_i(0)
+</code></pre>
+<p>Effet moyen :</p>
+<pre><code class="language-text">ATE = E[Y(1) - Y(0)]
+</code></pre>
+<p>On n'observe jamais les deux outcomes pour le meme objet. C'est le probleme
+fondamental de l'inference causale. Les methodes utilisent d'autres objets
+comparables et des hypotheses d'identification.</p>
+<h2>3. Question retenue dans DOTA</h2>
+<p>Traitement <code>D</code> :</p>
+<ul>
+<li><code>D = 1</code> si l'aire relative de l'objet dans sa tuile est inferieure ou egale
+au premier quartile calcule sur les objets train uniques ;</li>
+<li><code>D = 0</code> sinon.</li>
+</ul>
+<p>Outcome <code>Y</code> :</p>
+<ul>
+<li><code>Y = 1</code> si le modele OBB associe une prediction de meme classe, de confiance
+au moins 0.25 et d'IoU orientee au moins 0.50 ;</li>
+<li><code>Y = 0</code> sinon.</li>
+</ul>
+<p>Estimand :</p>
+<ul>
+<li>effet moyen du traitement dans la population des objets uniques du
+sous-ensemble de validation.</li>
+</ul>
+<p>Question :</p>
+<blockquote>
+<p>Quel est l'effet d'etre un objet tres petit sur la probabilite d'une
+detection correcte, apres ajustement sur la classe, l'orientation, la densite,
+la source, le GSD, le ratio de forme et les conditions de tuilage ?</p>
+</blockquote>
+<h2>4. Prudence sur le mot traitement</h2>
+<p>&quot;Rendre un objet petit&quot; n'est pas une intervention physique unique :</p>
+<ul>
+<li>eloigner le capteur ;</li>
+<li>diminuer la resolution ;</li>
+<li>changer la taille reelle de l'objet ;</li>
+<li>redimensionner l'image.</li>
+</ul>
+<p>Ces interventions pourraient avoir des effets differents. Le traitement est
+donc une condition observationnelle operationnelle. L'interpretation causale
+exige de supposer qu'une intervention pertinente sur la taille apparente est
+bien definie.</p>
+<p>Une formulation prudente :</p>
+<blockquote>
+<p>Sous les hypotheses d'ajustement et pour cette definition operationnelle, on
+estime le contraste associe au passage dans la categorie tres petite.</p>
+</blockquote>
+<h2>5. DAG</h2>
+<p>Version simplifiee :</p>
+<pre><code class="language-text">Classe ----------&gt; Taille tres petite ----------&gt; Detection correcte
+   |                       |                              ^
+   |                       v                              |
+   +-----------------&gt; Difficulte -----------------------+
+
+GSD -------------&gt; Taille tres petite
+ |
+ +--------------------------------------------------&gt; Detection correcte
+
+Source ----------&gt; GSD
+  |                                                  ^
+  +--------------------------------------------------+
+
+Densite -------------------------------------------&gt; Detection correcte
+Orientation --------------------------------------&gt; Detection correcte
+Ratio de forme -----------------------------------&gt; Detection correcte
+Bord de tuile ------------------------------------&gt; Detection correcte
+</code></pre>
+<p>Le DAG n'est pas une decoration. Il encode les chemins supposes et guide les
+variables a ajuster.</p>
+<h2>6. Confounder</h2>
+<p>Un confounder est une cause commune du traitement et de l'outcome.</p>
+<p>Exemple :</p>
+<ul>
+<li>certaines classes sont typiquement petites ;</li>
+<li>la classe influence aussi la facilite de detection.</li>
+</ul>
+<p>Chemin non causal :</p>
+<pre><code class="language-text">Taille tres petite &lt;- Classe -&gt; Detection correcte
+</code></pre>
+<p>Sans ajuster sur la classe, une mauvaise performance des petits objets pourrait
+etre en partie une difference entre classes.</p>
+<p>Reponse orale :</p>
+<blockquote>
+<p>Un confounder cree un chemin arriere entre traitement et outcome. J'ajuste
+dessus pour comparer des objets plus semblables et bloquer cette association
+non causale.</p>
+</blockquote>
+<h2>7. Mediator</h2>
+<p>Un mediator est cause par le traitement et transmet une partie de son effet.</p>
+<p>Exemple theorique :</p>
+<pre><code class="language-text">Taille tres petite -&gt; Qualite des features -&gt; Detection correcte
+</code></pre>
+<p>Si l'objectif est l'effet total de la petite taille, ajuster sur la qualite des
+features bloquerait une partie de l'effet que l'on veut mesurer.</p>
+<p>Le champ <code>difficult</code> peut en partie resumer les consequences de la taille et de
+la visibilite. Il n'est donc pas inclus automatiquement dans l'ajustement
+principal.</p>
+<h2>8. Collider</h2>
+<p>Un collider est une consequence commune de deux variables :</p>
+<pre><code class="language-text">Taille tres petite -&gt; Selection &lt;- Scene complexe
+</code></pre>
+<p>Si on conditionne sur <code>Selection</code>, on peut creer artificiellement une
+association entre taille et complexite, meme si elles etaient independantes.</p>
+<p>Exemple dans le projet :</p>
+<ul>
+<li>une tuile peut etre rejetee parce qu'un objet est coupe de facon ambigue ;</li>
+<li>la coupure depend de la position/taille de l'objet et de la grille ;</li>
+<li>analyser seulement des tuiles acceptees peut introduire une selection.</li>
+</ul>
+<p>On ne peut pas toujours eliminer ce biais, mais il faut le declarer.</p>
+<h2>9. Backdoor path</h2>
+<p>Un backdoor path est un chemin entre <code>D</code> et <code>Y</code> qui commence par une fleche
+entrant dans <code>D</code>.</p>
+<p>Exemple :</p>
+<pre><code class="language-text">D &lt;- Classe -&gt; Y
+</code></pre>
+<p>L'ajustement cherche un ensemble de variables qui bloque les backdoors sans
+bloquer les mediateurs ni ouvrir les colliders.</p>
+<h2>10. Exemple smoking, cancer et gene</h2>
+<p>DAG plausible :</p>
+<pre><code class="language-text">Gene -&gt; Smoking -&gt; Cancer
+  \----------------&gt; Cancer
+</code></pre>
+<p>Le gene est un confounder s'il influence a la fois smoking et cancer.</p>
+<p>Pour estimer l'effet total de smoking sur cancer, on ajuste sur le gene. On
+n'ajuste pas sur un mediator cause par smoking si on veut l'effet total.</p>
+<p>Si on avait :</p>
+<pre><code class="language-text">Smoking -&gt; Hospitalisation &lt;- Cancer
+</code></pre>
+<p>Hospitalisation serait un collider. Conditionner dessus pourrait creer une
+association trompeuse.</p>
+<h2>11. Variables d'ajustement du projet</h2>
+<h3>Incluses</h3>
+<ul>
+<li>classe ;</li>
+<li>orientation absolue ;</li>
+<li>log du ratio de forme ;</li>
+<li>densite d'objets dans la tuile ;</li>
+<li>source d'image ;</li>
+<li>GSD ;</li>
+<li>marge au bord de tuile ;</li>
+<li>fraction de l'objet conservee.</li>
+</ul>
+<h3>Non incluse dans l'ajustement principal</h3>
+<ul>
+<li>aire exacte, parce qu'elle definit directement le traitement ;</li>
+<li><code>difficult</code>, car elle peut resumer une consequence de la petite taille ;</li>
+<li>score de confiance, car il est produit par le detecteur apres le traitement ;</li>
+<li>IoU, car elle definit l'outcome ;</li>
+<li>predictions intermediaires du reseau, qui sont post-traitement.</li>
+</ul>
+<h2>12. Hypothese d'echangeabilite conditionnelle</h2>
+<p>Forme :</p>
+<pre><code class="language-text">(Y(0), Y(1)) independants de D conditionnellement a X
+</code></pre>
+<p>Intuition :</p>
+<blockquote>
+<p>Apres ajustement sur X, le groupe tres petit et le groupe controle sont
+comparables quant a leurs outcomes potentiels.</p>
+</blockquote>
+<p>Cette hypothese ne peut pas etre prouvee avec les donnees. Elle est fragile ici
+car des variables peuvent manquer :</p>
+<ul>
+<li>contraste local ;</li>
+<li>flou ;</li>
+<li>occultation ;</li>
+<li>conditions de capture ;</li>
+<li>qualite d'annotation ;</li>
+<li>texture du fond.</li>
+</ul>
+<h2>13. Positivite</h2>
+<p>Pour chaque combinaison de covariables pertinente :</p>
+<pre><code class="language-text">0 &lt; P(D = 1 | X) &lt; 1
+</code></pre>
+<p>Il faut des objets petits et non petits comparables. Si tous les helicopters
+d'un certain type sont minuscules, leur contrefactuel non petit n'est pas
+soutenu par les donnees.</p>
+<p>Diagnostic :</p>
+<ul>
+<li>distributions des scores de propension ;</li>
+<li>fraction des scores entre 0.1 et 0.9 ;</li>
+<li>poids extremes ;</li>
+<li>effectifs par sous-groupe.</li>
+</ul>
+<p>Clipper les scores limite la variance, mais ne cree pas de donnees manquantes.</p>
+<h2>14. Coherence et consistance</h2>
+<p>Si l'objet recoit effectivement <code>D=d</code>, son outcome observe doit correspondre a
+<code>Y(d)</code>.</p>
+<p>Cette hypothese suppose une version assez claire du traitement. Elle est
+fragile lorsque plusieurs mecanismes differents produisent la meme categorie
+&quot;tres petit&quot;.</p>
+<h2>15. SUTVA et interference</h2>
+<p>SUTVA suppose notamment que l'outcome d'un objet ne depend pas du traitement
+d'un autre objet.</p>
+<p>Dans la detection, cette independance peut echouer :</p>
+<ul>
+<li>NMS entre objets voisins ;</li>
+<li>occlusion ;</li>
+<li>limite <code>max_det</code> dans une tuile dense ;</li>
+<li>contexte partage.</li>
+</ul>
+<p>Le bootstrap par image reconnait la correlation statistique entre objets de la
+meme image, mais il ne supprime pas une interference causale.</p>
+<h2>16. Absence de fuite</h2>
+<p>Les predictions causales doivent provenir d'un modele evalue hors de ses images
+train. Une prediction sur un objet vu pendant l'entrainement aurait une erreur
+trop optimiste.</p>
+<p>Ici :</p>
+<ul>
+<li>le detecteur est ajuste sur les tuiles train ;</li>
+<li>l'outcome est construit sur les tuiles validation ;</li>
+<li>aucune image source n'est partagee.</li>
+</ul>
+<h2>17. Difference brute</h2>
+<pre><code class="language-text">E[Y | D=1] - E[Y | D=0]
+</code></pre>
+<p>Avantage :</p>
+<ul>
+<li>simple et descriptif.</li>
+</ul>
+<p>Limite :</p>
+<ul>
+<li>melange effet du traitement et differences de composition.</li>
+</ul>
+<p>Elle reste utile comme point de comparaison. Si l'effet ajuste change beaucoup,
+les covariables jouaient un role important.</p>
+<h2>18. Regression ajustee et g-computation</h2>
+<p>On modelise :</p>
+<pre><code class="language-text">mu_d(X) = E[Y | D=d, X]
+</code></pre>
+<p>Puis on predit pour chaque objet :</p>
+<pre><code class="language-text">mu_1(X_i) - mu_0(X_i)
+</code></pre>
+<p>et on moyenne.</p>
+<p>Avantage :</p>
+<ul>
+<li>produit directement deux outcomes attendus.</li>
+</ul>
+<p>Limite :</p>
+<ul>
+<li>biais si le modele d'outcome est mal specifie.</li>
+</ul>
+<p>Dans le pipeline, deux forets de classification servent de T-learner : une pour
+les traites, une pour les controles.</p>
+<h2>19. Score de propension</h2>
+<pre><code class="language-text">e(X) = P(D=1 | X)
+</code></pre>
+<p>Il resume la probabilite d'etre traite compte tenu des covariables.</p>
+<p>Le score ne prouve pas que les groupes sont comparables. Il aide a ajuster les
+variables observees et a diagnostiquer la positivite.</p>
+<h2>20. IPW</h2>
+<p>Idee :</p>
+<ul>
+<li>un traite rare dans son profil recoit un poids proche de <code>1/e(X)</code> ;</li>
+<li>un controle rare recoit un poids proche de <code>1/(1-e(X))</code>.</li>
+</ul>
+<p>L'echantillon pondere vise une pseudo-population ou le traitement est moins
+associe aux covariables.</p>
+<p>Limite :</p>
+<ul>
+<li>score proche de 0 ou 1 -&gt; poids enorme -&gt; variance et instabilite.</li>
+</ul>
+<h2>21. AIPW doublement robuste</h2>
+<p>Le score AIPW combine modele d'outcome et score de propension :</p>
+<pre><code class="language-text">psi_i =
+mu_1(X_i) - mu_0(X_i)
++ D_i * (Y_i - mu_1(X_i)) / e(X_i)
+- (1-D_i) * (Y_i - mu_0(X_i)) / (1-e(X_i))
+</code></pre>
+<p>Intuition :</p>
+<ol>
+<li>g-computation fournit une prediction de base ;</li>
+<li>les residus observes corrigent cette prediction ;</li>
+<li>la correction utilise la probabilite de traitement.</li>
+</ol>
+<p>&quot;Doublement robuste&quot; signifie que l'estimateur peut rester coherent si l'un des
+deux modeles nuisances est correctement specifie, sous les autres hypotheses.
+Cela ne protege pas contre :</p>
+<ul>
+<li>confounder non observe ;</li>
+<li>mauvaise definition du traitement ;</li>
+<li>absence de positivite ;</li>
+<li>fuite de donnees ;</li>
+<li>selection.</li>
+</ul>
+<h2>22. Cross-fitting</h2>
+<p>Si le meme objet sert a entrainer les modeles nuisances et a calculer son
+pseudo-outcome, un modele flexible peut overfitter.</p>
+<p>Le cross-fitting :</p>
+<ol>
+<li>separe les images en folds ;</li>
+<li>ajuste les modeles sur les autres folds ;</li>
+<li>predit sur le fold tenu a l'ecart ;</li>
+<li>rassemble les predictions hors fold.</li>
+</ol>
+<p>Le split est groupe par image source pour ne pas separer des objets fortement
+lies d'une meme image.</p>
+<h2>23. Intervalles de confiance</h2>
+<p>Les objets d'une meme image ne sont pas independants. Un bootstrap objet par
+objet donnerait trop d'unites independantes.</p>
+<p>Le bootstrap groupe :</p>
+<ol>
+<li>reechantillonne les images avec remise ;</li>
+<li>prend tous leurs objets ;</li>
+<li>recalcule la moyenne des scores ;</li>
+<li>utilise les quantiles 2.5 % et 97.5 %.</li>
+</ol>
+<p>Limite du pipeline :</p>
+<ul>
+<li>les modeles nuisances ne sont pas re-ajustes dans chaque repetition, donc
+l'incertitude totale peut etre sous-estimee.</li>
+</ul>
+<h2>24. Effet heterogene</h2>
+<p>L'ATE peut masquer des differences :</p>
+<pre><code class="language-text">CATE(x) = E[Y(1) - Y(0) | X=x]
+</code></pre>
+<p>Exemples :</p>
+<ul>
+<li>effet plus negatif dans les scenes denses ;</li>
+<li>effet different selon la classe ;</li>
+<li>effet plus fort pour certaines orientations ;</li>
+<li>effet incertain pour classes rares.</li>
+</ul>
+<p>Une heterogeneite estimee n'est pas automatiquement reelle. Chercher beaucoup
+de sous-groupes augmente le risque de trouver du bruit.</p>
+<h2>25. Arbre causal honnete</h2>
+<p>Le pipeline utilise un arbre sur les pseudo-outcomes AIPW :</p>
+<ul>
+<li>moitie des images pour choisir les divisions ;</li>
+<li>autre moitie pour estimer les effets dans les feuilles ;</li>
+<li>profondeur limitee ;</li>
+<li>effectif minimal par feuille.</li>
+</ul>
+<p>&quot;Honnete&quot; signifie que les memes observations ne choisissent pas les coupures
+et n'estiment pas ensuite leurs effets. Cela reduit le biais de selection.</p>
+<p>Une feuille de petite taille ou dominee par une seule classe doit etre
+interpretee prudemment.</p>
+<h2>26. Foret sur pseudo-outcomes</h2>
+<p>Plusieurs arbres de regression apprennent <code>psi_i</code> a partir de <code>X</code>. Le pipeline
+utilise un split croise par image afin que la CATE d'un objet provienne d'une
+foret qui n'a pas utilise son image.</p>
+<p>Cette methode est une approximation pedagogique d'une foret causale :</p>
+<ul>
+<li>elle utilise un score orthogonal AIPW ;</li>
+<li>elle permet d'explorer l'heterogeneite ;</li>
+<li>elle n'implemente pas toutes les garanties d'un package specialise de
+generalized random forest.</li>
+</ul>
+<p>Il faut nommer cette limite, pas presenter l'outil comme magique.</p>
+<h2>27. Analyse de sensibilite</h2>
+<p>Le resultat principal depend de choix :</p>
+<ul>
+<li>IoU 0.50 pour definir une detection correcte ;</li>
+<li>seuil du premier quartile pour &quot;tres petit&quot; ;</li>
+<li>clipping du score de propension ;</li>
+<li>modele nuisances ;</li>
+<li>sous-ensemble.</li>
+</ul>
+<p>Le pipeline varie au moins :</p>
+<ul>
+<li>IoU 0.40, 0.50 et 0.60 ;</li>
+<li>clipping 0.02, 0.05 et 0.10.</li>
+</ul>
+<p>Un signe stable renforce la conclusion descriptive sous les hypotheses. Des
+variations fortes signalent une conclusion fragile.</p>
+<h2>28. Comment interpreter un effet</h2>
+<p>Exemple fictif :</p>
+<pre><code class="language-text">ATE AIPW = -0.18
+IC 95 % = [-0.25, -0.10]
+</code></pre>
+<p>Interpretation prudente :</p>
+<blockquote>
+<p>Sous les hypotheses d'identification, la condition tres petite est associee a
+une diminution moyenne estimee de 18 points de pourcentage de la probabilite
+de detection correcte. L'intervalle bootstrap exclut zero dans ce protocole.</p>
+</blockquote>
+<p>Ne pas dire :</p>
+<blockquote>
+<p>Rendre n'importe quel objet petit fera toujours baisser la detection de 18 %.</p>
+</blockquote>
+<p>L'effet est une difference de probabilite en points de pourcentage, pas
+necessairement une baisse relative de 18 %.</p>
+<h2>29. Liste de limites a savoir expliquer</h2>
+<ol>
+<li>Traitement non randomise.</li>
+<li>Variables non observees.</li>
+<li>Intervention &quot;taille&quot; imparfaitement definie.</li>
+<li>Sous-ensemble selectionne.</li>
+<li>Classes rares et manque de positivite local.</li>
+<li>Dependances entre objets d'une image.</li>
+<li>NMS et interference possible.</li>
+<li>Outcome produit par un seul detecteur.</li>
+<li>Erreurs d'annotation.</li>
+<li>Selection due au tuilage et aux fragments.</li>
+<li>Seuils de confiance et IoU arbitraires mais analyses.</li>
+<li>Foret causale approximative.</li>
+<li>Bootstrap ne re-ajustant pas tous les modeles.</li>
+<li>Generalisation limitee a la population analysee.</li>
+</ol>
+<h2>30. Questions de rappel</h2>
+<ol>
+<li>Pourquoi l'outcome potentiel non observe pose-t-il un probleme ?</li>
+<li>Quelle est la population de l'ATE ici ?</li>
+<li>Pourquoi la classe peut-elle etre un confounder ?</li>
+<li>Pourquoi ne pas ajuster sur le score de confiance ?</li>
+<li>Comment ajuster sur un mediator modifie-t-il l'estimand ?</li>
+<li>Comment conditionner sur un collider cree-t-il un biais ?</li>
+<li>Quelle difference entre exchangeabilite et positivite ?</li>
+<li>Pourquoi le score de propension ne resout-il pas les confounders non observes ?</li>
+<li>Pourquoi IPW devient-il instable ?</li>
+<li>Que corrige la partie residuelle de l'AIPW ?</li>
+<li>Pourquoi le cross-fitting est-il groupe par image ?</li>
+<li>Pourquoi le bootstrap est-il groupe par image ?</li>
+<li>Que signifie &quot;honnete&quot; pour l'arbre ?</li>
+<li>Pourquoi une CATE extreme peut-elle etre du bruit ?</li>
+<li>Quelle phrase permet d'interpreter un effet sans surpromettre ?</li>
+</ol>
+</section><section class="document" id="doc-04-resultats-et-interpretation"><div class="source-label">04_resultats_et_interpretation.md</div><h1>Resultats reels et interpretation defendable</h1>
+<p>Ce chapitre contient les chiffres finaux du projet. Il faut pouvoir les citer
+sans les apprendre comme une liste isolee. Pour chaque valeur, savoir repondre
+a quatre questions :</p>
+<ol>
+<li>quelle population est mesuree ?</li>
+<li>quelle definition est utilisee ?</li>
+<li>quelle conclusion est permise ?</li>
+<li>quelle limite empeche de generaliser trop vite ?</li>
+</ol>
+<h2>1. Protocole final en une minute</h2>
+<p>Le sous-ensemble contient :</p>
+<ul>
+<li>180 images source pour l'entrainement ;</li>
+<li>60 images source pour la validation ;</li>
+<li>15 classes presentes dans les deux splits ;</li>
+<li>912 tuiles train et 245 tuiles validation ;</li>
+<li>6 515 annotations tuilees train et 1 972 validation ;</li>
+<li>zero image source commune entre train et validation.</li>
+</ul>
+<p>Les images sont decoupees en tuiles de 1024 pixels. Le train utilise un stride
+de 824 pixels et la validation un stride de 1024 pixels. Les fragments
+conservant au moins 70 % de l'objet sont gardes. Les fragments ambigus entre
+20 % et 70 % provoquent le rejet de la tuile concernee.</p>
+<p>Trois detecteurs YOLO26n ont ete entraines pendant 20 epochs avec la graine 42 :</p>
+<ul>
+<li>une baseline HBB a 640 ;</li>
+<li>un OBB a 640 ;</li>
+<li>un OBB a 1024.</li>
+</ul>
+<p>La validation finale autorise jusqu'a 1 000 detections par tuile. Les metriques
+globales sont calculees par Ultralytics sur les 245 tuiles. L'outcome causal
+utilise ensuite un seuil de confiance de 0.25 et une IoU orientee de 0.50.</p>
+<h2>2. Resultats predictifs globaux</h2>
+<table>
+<thead>
+<tr>
+  <th>Modele</th>
+  <th style="text-align:right">Precision</th>
+  <th style="text-align:right">Recall</th>
+  <th style="text-align:right">F1</th>
+  <th style="text-align:right">mAP50</th>
+  <th style="text-align:right">mAP50-95</th>
+  <th style="text-align:right">Inference par image</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>YOLO26n-HBB-640</td>
+  <td style="text-align:right">0.451</td>
+  <td style="text-align:right">0.283</td>
+  <td style="text-align:right">0.347</td>
+  <td style="text-align:right">0.257</td>
+  <td style="text-align:right">0.145</td>
+  <td style="text-align:right">environ 3.0 ms</td>
+</tr>
+<tr>
+  <td>YOLO26n-OBB-640</td>
+  <td style="text-align:right">0.256</td>
+  <td style="text-align:right">0.299</td>
+  <td style="text-align:right">0.276</td>
+  <td style="text-align:right">0.239</td>
+  <td style="text-align:right">0.146</td>
+  <td style="text-align:right">environ 5.3 ms</td>
+</tr>
+<tr>
+  <td>YOLO26n-OBB-1024</td>
+  <td style="text-align:right">0.574</td>
+  <td style="text-align:right">0.290</td>
+  <td style="text-align:right">0.385</td>
+  <td style="text-align:right">0.274</td>
+  <td style="text-align:right">0.186</td>
+  <td style="text-align:right">environ 7.6 ms</td>
+</tr>
+</tbody>
+</table>
+<h3>Calculs a savoir refaire</h3>
+<p>Gain absolu de mAP50-95 de OBB-1024 par rapport a OBB-640 :</p>
+<pre><code class="language-text">0.186 - 0.146 = 0.040 point
+</code></pre>
+<p>Gain relatif :</p>
+<pre><code class="language-text">(0.186 / 0.146 - 1) x 100 = environ 27 %
+</code></pre>
+<p>Par rapport a HBB-640, le gain relatif de mAP50-95 est environ 28 %.</p>
+<p>Le cout est une inference environ 44 % plus lente que OBB-640 :</p>
+<pre><code class="language-text">7.6 / 5.3 - 1 = environ 0.44
+</code></pre>
+<p>Les temps dependent du GPU et de l'etat de la machine. Ils decrivent ce run sur
+RTX 4060, pas une constante universelle.</p>
+<h3>Interpretation correcte</h3>
+<p>OBB-1024 est le meilleur modele de ce protocole selon mAP50-95. Son avantage
+vient surtout d'une precision plus forte. Son recall reste proche de 0.29 :
+environ sept objets sur dix ne contribuent donc pas a un rappel correct au
+point de fonctionnement resume par la metrique globale.</p>
+<p>La resolution 1024 aide probablement parce qu'un objet minuscule conserve plus
+de pixels apres redimensionnement. Ce resultat soutient l'hypothese de
+resolution, mais il ne permet pas d'affirmer que 1024 sera toujours optimal.</p>
+<p>HBB-640 et OBB-640 ont presque la meme mAP50-95. Donc, dans cette experience,
+conserver l'orientation sans augmenter la resolution n'a pas suffi a creer un
+gain global clair. Il ne faut pas conclure que les OBB sont inutiles : ils
+restent geometriquement plus fideles et sont necessaires a l'IoU orientee de
+l'analyse causale.</p>
+<h2>3. Resultats par classe</h2>
+<p>Pour YOLO26n-OBB-1024, les meilleures AP50-95 sont :</p>
+<table>
+<thead>
+<tr>
+  <th style="text-align:right">Rang</th>
+  <th>Classe</th>
+  <th style="text-align:right">AP50-95</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:right">1</td>
+  <td>tennis-court</td>
+  <td style="text-align:right">0.544</td>
+</tr>
+<tr>
+  <td style="text-align:right">2</td>
+  <td>plane</td>
+  <td style="text-align:right">0.384</td>
+</tr>
+<tr>
+  <td style="text-align:right">3</td>
+  <td>ship</td>
+  <td style="text-align:right">0.325</td>
+</tr>
+<tr>
+  <td style="text-align:right">4</td>
+  <td>large-vehicle</td>
+  <td style="text-align:right">0.249</td>
+</tr>
+<tr>
+  <td style="text-align:right">5</td>
+  <td>roundabout</td>
+  <td style="text-align:right">0.232</td>
+</tr>
+</tbody>
+</table>
+<p>Les classes les plus faibles sont :</p>
+<table>
+<thead>
+<tr>
+  <th>Classe</th>
+  <th style="text-align:right">AP50-95</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>helicopter</td>
+  <td style="text-align:right">0.000</td>
+</tr>
+<tr>
+  <td>basketball-court</td>
+  <td style="text-align:right">0.032</td>
+</tr>
+<tr>
+  <td>soccer-ball-field</td>
+  <td style="text-align:right">0.082</td>
+</tr>
+<tr>
+  <td>harbor</td>
+  <td style="text-align:right">0.095</td>
+</tr>
+</tbody>
+</table>
+<p>Ces differences combinent plusieurs mecanismes :</p>
+<ul>
+<li>nombre d'exemples ;</li>
+<li>taille apparente ;</li>
+<li>contraste ;</li>
+<li>densite de scene ;</li>
+<li>variabilite intra-classe ;</li>
+<li>facilite de localiser precisement la forme ;</li>
+<li>courte duree d'entrainement.</li>
+</ul>
+<p>Une AP faible pour <code>helicopter</code> ne prouve pas que la classe est
+intrinsequement impossible. La validation ne contient que tres peu
+d'helicopteres et le modele a peu d'information pour apprendre et evaluer cette
+classe.</p>
+<p>Une AP elevee pour <code>tennis-court</code> est plausible parce que la forme est grande,
+reguliere et visuellement distinctive. Cela reste une explication
+interpretative, pas une estimation causale de la classe.</p>
+<h2>4. Taille, orientation et analyse descriptive</h2>
+<p>Les groupes de taille utilisent les quartiles train. Sur les 1 646 objets
+validation uniques de la table causale :</p>
+<table>
+<thead>
+<tr>
+  <th>Groupe</th>
+  <th style="text-align:right">Objets</th>
+  <th style="text-align:right">Taux de detection correcte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>tres petit</td>
+  <td style="text-align:right">623</td>
+  <td style="text-align:right">0.307</td>
+</tr>
+<tr>
+  <td>petit</td>
+  <td style="text-align:right">386</td>
+  <td style="text-align:right">0.544</td>
+</tr>
+<tr>
+  <td>moyen</td>
+  <td style="text-align:right">333</td>
+  <td style="text-align:right">0.456</td>
+</tr>
+<tr>
+  <td>grand</td>
+  <td style="text-align:right">304</td>
+  <td style="text-align:right">0.536</td>
+</tr>
+</tbody>
+</table>
+<p>Le groupe tres petit est clairement le plus faible. En revanche, les quatre
+groupes ne suivent pas une relation parfaitement monotone. <code>petit</code> depasse
+<code>moyen</code> et <code>grand</code> dans cette validation. La composition en classes, scenes et
+orientations change entre groupes. Un tableau descriptif ne maintient pas les
+autres variables constantes.</p>
+<p>La heatmap <code>detection_by_size_orientation.png</code> affiche dans chaque case :</p>
+<ul>
+<li>le taux de detection correcte ;</li>
+<li>l'effectif <code>n</code>.</li>
+</ul>
+<p>Il faut toujours lire les deux. Par exemple, une case a 0.80 avec peu
+d'observations est moins stable qu'une case a 0.50 avec plusieurs centaines
+d'objets.</p>
+<p>Le groupe d'orientation 75-90 degres a un taux global eleve, mais il contient
+beaucoup d'objets et une composition particuliere en classes. Ne pas dire :
+&quot;une forte orientation ameliore causalement la detection&quot;. Ce serait confondre
+un contraste descriptif avec un effet causal.</p>
+<h2>5. Construction de la question causale</h2>
+<h3>Traitement D</h3>
+<pre><code class="language-text">D = 1 si aire relative de l'objet &lt;= 0.0005035400
+</code></pre>
+<p>Le seuil est le premier quartile des objets train uniques. Il represente
+environ 0.050 % de la surface d'une tuile. Pour une tuile 1024 x 1024, cela
+correspond a environ 528 pixels carres, soit un carre equivalent d'environ
+23 x 23 pixels.</p>
+<p>Cette equivalence aide l'intuition. Elle ne transforme pas tous les objets en
+carres et ne remplace pas l'aire polygonale reelle.</p>
+<h3>Outcome Y</h3>
+<pre><code class="language-text">Y = 1 si une prediction OBB :
+    - a la meme classe ;
+    - a une confiance &gt;= 0.25 ;
+    - a une IoU orientee &gt;= 0.50.
+</code></pre>
+<p>Le matching est un-a-un et maximise l'IoU dans chaque classe. Une prediction ne
+peut donc pas sauver plusieurs objets.</p>
+<h3>Population et estimand</h3>
+<ul>
+<li>1 646 objets originaux uniques ;</li>
+<li>53 images source validation contenant ces objets ;</li>
+<li>623 objets traites, soit 37.8 % ;</li>
+<li>ATE sur la probabilite de detection correcte.</li>
+</ul>
+<p>La validation contient 60 images selectionnees, mais 53 contribuent a la table
+causale finale. Les images sans objet unique eligible ne contribuent pas a cet
+estimand.</p>
+<h3>Variables d'ajustement</h3>
+<p>L'ensemble X contient :</p>
+<ul>
+<li>classe ;</li>
+<li>orientation absolue ;</li>
+<li>log du ratio de forme ;</li>
+<li>densite d'objets dans la tuile ;</li>
+<li>source d'image ;</li>
+<li>GSD ;</li>
+<li>position du centre de l'objet dans la tuile.</li>
+</ul>
+<p>L'aire exacte est exclue parce qu'elle definit D. La fraction conservee est
+exclue de l'ajustement final car elle est liee a la selection par tuilage et
+peut se situer apres la taille dans le mecanisme etudie. La confiance et l'IoU
+sont post-traitement ou definissent Y.</p>
+<h2>6. Contraste observe avant ajustement</h2>
+<table>
+<thead>
+<tr>
+  <th>Groupe</th>
+  <th style="text-align:right">Objets</th>
+  <th style="text-align:right">Taux Y=1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Tres petit D=1</td>
+  <td style="text-align:right">623</td>
+  <td style="text-align:right">0.307</td>
+</tr>
+<tr>
+  <td>Controle D=0</td>
+  <td style="text-align:right">1 023</td>
+  <td style="text-align:right">0.513</td>
+</tr>
+</tbody>
+</table>
+<p>Difference brute :</p>
+<pre><code class="language-text">0.307 - 0.513 = -0.207
+</code></pre>
+<p>Le groupe tres petit a donc environ 20.7 points de pourcentage de detection
+correcte en moins dans les donnees observees. Cette difference n'est pas encore
+un effet causal parce que les groupes different aussi en classe, GSD, densite
+et autres covariables.</p>
+<h2>7. Estimateurs causaux compares</h2>
+<table>
+<thead>
+<tr>
+  <th>Methode</th>
+  <th style="text-align:right">Effet</th>
+  <th style="text-align:right">IC 95 % bootstrap image</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Difference brute</td>
+  <td style="text-align:right">-0.207</td>
+  <td style="text-align:right">[-0.520 ; 0.052]</td>
+</tr>
+<tr>
+  <td>G-computation</td>
+  <td style="text-align:right">-0.170</td>
+  <td style="text-align:right">[-0.260 ; -0.096]</td>
+</tr>
+<tr>
+  <td>IPW</td>
+  <td style="text-align:right">-0.620</td>
+  <td style="text-align:right">[-0.860 ; -0.352]</td>
+</tr>
+<tr>
+  <td>AIPW doublement robuste</td>
+  <td style="text-align:right">-0.368</td>
+  <td style="text-align:right">[-0.530 ; -0.166]</td>
+</tr>
+</tbody>
+</table>
+<h3>Phrase principale a apprendre</h3>
+<blockquote>
+<p>Sous les hypotheses d'identification, la condition tres petite est associee
+a une diminution moyenne estimee de 36.8 points de pourcentage de la
+probabilite de detection correcte. L'intervalle bootstrap groupe a 95 % est
+[-53.0 ; -16.6] points et exclut zero dans la specification principale.</p>
+</blockquote>
+<p>Le mot <code>associee</code> rappelle que le traitement n'est pas randomise. Le mot
+<code>moyenne</code> rappelle qu'il s'agit d'un ATE dans la population analysee. Le mot
+<code>points</code> evite de confondre difference absolue et baisse relative.</p>
+<h3>Pourquoi les quatre valeurs different-elles ?</h3>
+<ul>
+<li>la difference brute ne rend pas les groupes comparables ;</li>
+<li>la g-computation depend des modeles d'outcome ;</li>
+<li>l'IPW depend fortement des inverses de propension ;</li>
+<li>l'AIPW combine outcome et propension avec une correction residuelle.</li>
+</ul>
+<p>L'IPW tres negatif et l'ecart entre estimateurs signalent une fragilite de
+support ou de modelisation. Il serait incorrect de dire que l'AIPW &quot;revele la
+verite&quot;. Il fournit l'estimation principale selon le protocole choisi.</p>
+<h2>8. Positivite et propension</h2>
+<p>La part des objets dont la propension tronquee est entre 0.10 et 0.90 vaut
+76.5 %. Cela montre un recouvrement reel, mais imparfait.</p>
+<p>Details utiles :</p>
+<ul>
+<li>205 objets atteignent la borne basse 0.05 ;</li>
+<li>42 objets atteignent la borne haute 0.95 ;</li>
+<li>mediane de propension chez D=0 : 0.251 ;</li>
+<li>mediane de propension chez D=1 : 0.625.</li>
+</ul>
+<p>Les profils traites et controles restent donc differents. Le clipping evite des
+poids infinis, mais change aussi l'estimand pratique et introduit un compromis
+biais-variance.</p>
+<h2>9. Analyse de sensibilite</h2>
+<table>
+<thead>
+<tr>
+  <th>Specification</th>
+  <th style="text-align:right">Effet AIPW</th>
+  <th style="text-align:right">IC 95 %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>IoU &gt;= 0.40</td>
+  <td style="text-align:right">-0.374</td>
+  <td style="text-align:right">[-0.518 ; -0.190]</td>
+</tr>
+<tr>
+  <td>IoU &gt;= 0.50</td>
+  <td style="text-align:right">-0.368</td>
+  <td style="text-align:right">[-0.519 ; -0.183]</td>
+</tr>
+<tr>
+  <td>IoU &gt;= 0.60</td>
+  <td style="text-align:right">-0.332</td>
+  <td style="text-align:right">[-0.480 ; -0.141]</td>
+</tr>
+<tr>
+  <td>Clipping 0.02</td>
+  <td style="text-align:right">-0.274</td>
+  <td style="text-align:right">[-0.507 ; 0.085]</td>
+</tr>
+<tr>
+  <td>Clipping 0.10</td>
+  <td style="text-align:right">-0.388</td>
+  <td style="text-align:right">[-0.504 ; -0.246]</td>
+</tr>
+<tr>
+  <td>Graine nuisances 7</td>
+  <td style="text-align:right">-0.370</td>
+  <td style="text-align:right">[-0.535 ; -0.155]</td>
+</tr>
+<tr>
+  <td>Graine nuisances 99</td>
+  <td style="text-align:right">-0.366</td>
+  <td style="text-align:right">[-0.522 ; -0.177]</td>
+</tr>
+</tbody>
+</table>
+<p>Le signe reste negatif dans toutes les estimations ponctuelles. Les seuils IoU
+et les graines des modeles nuisances donnent des amplitudes proches.</p>
+<p>La specification de clipping 0.02 produit toutefois un intervalle qui traverse
+zero. C'est important : la conclusion ponctuelle est stable en signe, mais la
+force inferentielle depend du traitement des propensions extremes. Cette
+nuance doit apparaitre dans une bonne presentation orale.</p>
+<h2>10. Arbre causal honnete</h2>
+<p>L'arbre est volontairement conservateur :</p>
+<ul>
+<li>une moitie des images choisit une seule division ;</li>
+<li>chaque feuille de structure doit etre grande ;</li>
+<li>l'autre moitie estime les effets des feuilles ;</li>
+<li>les intervalles reechantillonnent les images.</li>
+</ul>
+<p>La division choisie est :</p>
+<pre><code class="language-text">nombre d'objets dans la tuile &lt;= 16.5
+</code></pre>
+<p>Resultats sur la moitie holdout :</p>
+<table>
+<thead>
+<tr>
+  <th>Sous-groupe</th>
+  <th style="text-align:right">Objets</th>
+  <th style="text-align:right">Images</th>
+  <th style="text-align:right">Effet</th>
+  <th style="text-align:right">IC 95 %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Densite &lt;= 16.5</td>
+  <td style="text-align:right">296</td>
+  <td style="text-align:right">20</td>
+  <td style="text-align:right">-0.131</td>
+  <td style="text-align:right">[-0.640 ; 0.474]</td>
+</tr>
+<tr>
+  <td>Densite &gt; 16.5</td>
+  <td style="text-align:right">795</td>
+  <td style="text-align:right">12</td>
+  <td style="text-align:right">-0.457</td>
+  <td style="text-align:right">[-0.646 ; -0.221]</td>
+</tr>
+</tbody>
+</table>
+<p>L'effet semble plus negatif dans les tuiles denses. Le sous-groupe dense ne
+contient cependant que 12 images source malgre 795 objets. Il ne faut donc pas
+transformer cette coupure en loi universelle. Elle constitue une hypothese
+d'heterogeneite a verifier sur davantage d'images.</p>
+<p>Le mot <code>honnete</code> ne veut pas dire que le resultat est certainement vrai. Il
+veut dire que les observations choisissant la coupure ne servent pas ensuite a
+estimer l'effet de cette meme coupure.</p>
+<h2>11. Foret sur pseudo-outcomes</h2>
+<p>La foret predit une CATE a partir des scores AIPW dans des folds groupes par
+image. Les predictions sont projetees dans [-1, 1], les bornes logiques d'un
+effet sur un outcome binaire.</p>
+<p>Resume de la distribution :</p>
+<ul>
+<li>mediane environ -0.258 ;</li>
+<li>premier quartile environ -0.418 ;</li>
+<li>troisieme quartile environ -0.132 ;</li>
+<li>5e percentile environ -0.906 ;</li>
+<li>95e percentile environ 0.287.</li>
+</ul>
+<p>Cette foret est une approximation pedagogique d'une foret causale specialisee.
+Les valeurs individuelles ne doivent pas etre presentees comme des effets
+personnels vrais. Elles servent a visualiser une heterogeneite possible.</p>
+<h2>12. Ce qui est predictif et ce qui est causal</h2>
+<table>
+<thead>
+<tr>
+  <th>Enonce</th>
+  <th>Type</th>
+  <th>Statut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>OBB-1024 a mAP50-95 0.186</td>
+  <td>Predictif</td>
+  <td>Mesure directe du protocole</td>
+</tr>
+<tr>
+  <td><code>tennis-court</code> a la meilleure AP</td>
+  <td>Predictif</td>
+  <td>Mesure par classe</td>
+</tr>
+<tr>
+  <td>Les tres petits ont un taux observe de 0.307</td>
+  <td>Descriptif</td>
+  <td>Association brute</td>
+</tr>
+<tr>
+  <td>AIPW vaut -0.368</td>
+  <td>Causal sous hypotheses</td>
+  <td>Estimation ajustee</td>
+</tr>
+<tr>
+  <td>L'effet semble plus fort en scene dense</td>
+  <td>Heterogeneite causale exploratoire</td>
+  <td>A confirmer</td>
+</tr>
+</tbody>
+</table>
+<p>Un modele peut avoir une bonne AP pour <code>tennis-court</code> tout en ne repondant pas
+a la question : &quot;quel est l'effet d'etre tres petit ?&quot;. La mAP integre
+localisation et classification. L'ATE compare des outcomes potentiels sous deux
+conditions de taille, avec des hypotheses d'identification.</p>
+<h2>13. Figures : ordre de lecture</h2>
+<h3><code>model_comparison.png</code></h3>
+<ol>
+<li>identifier le meilleur mAP50-95 ;</li>
+<li>comparer precision et recall ;</li>
+<li>noter que F1 est dans le tableau global ;</li>
+<li>rappeler le cout d'inference de 1024.</li>
+</ol>
+<h3><code>per_class_metrics.png</code></h3>
+<ol>
+<li>regarder les ecarts de classe ;</li>
+<li>ne pas ignorer les classes rares ;</li>
+<li>comparer HBB/OBB sans generaliser hors protocole.</li>
+</ol>
+<h3><code>prediction_examples_yolo26n-obb-1024.jpg</code></h3>
+<ol>
+<li>voir les OBB et confiances ;</li>
+<li>reperer les tuiles sans prediction ;</li>
+<li>relier ces faux negatifs au recall modeste.</li>
+</ol>
+<h3><code>detection_by_size_orientation.png</code></h3>
+<ol>
+<li>lire le taux ;</li>
+<li>lire l'effectif <code>n</code> ;</li>
+<li>rappeler que la heatmap est descriptive.</li>
+</ol>
+<h3><code>causal_effects.png</code></h3>
+<ol>
+<li>lire le signe ;</li>
+<li>comparer les estimateurs ;</li>
+<li>verifier si l'intervalle traverse zero ;</li>
+<li>remarquer la dispersion IPW/AIPW.</li>
+</ol>
+<h3><code>propensity_overlap.png</code></h3>
+<ol>
+<li>verifier qu'il existe du support commun ;</li>
+<li>reperer les masses aux bornes 0.05 et 0.95 ;</li>
+<li>expliquer pourquoi le clipping est necessaire mais pas gratuit.</li>
+</ol>
+<h3><code>causal_tree.png</code></h3>
+<ol>
+<li>distinguer moitie structure et moitie holdout ;</li>
+<li>lire le seuil de densite ;</li>
+<li>comparer effets, intervalles et nombre d'images ;</li>
+<li>conclure <code>exploratoire</code>.</li>
+</ol>
+<h2>14. Reponse orale de deux minutes</h2>
+<blockquote>
+<p>J'ai d'abord separe les images DOTA au niveau source avant tout tuilage afin
+d'eviter une fuite entre tuiles proches. Sur 180 images train et 60
+validation, j'ai entraine trois YOLO26n pendant 20 epochs. Le meilleur est
+YOLO26n-OBB a 1024 avec une mAP50-95 de 0.186, contre environ 0.146 pour les
+deux modeles 640. Son recall reste toutefois modeste, environ 0.29, et les
+performances varient fortement par classe.</p>
+<p>La question causale est differente : quel est l'effet d'etre tres petit sur
+la probabilite d'une detection OBB correcte ? Le traitement utilise le
+premier quartile d'aire train et l'outcome exige meme classe, confiance 0.25
+et IoU orientee 0.50. Sur 1 646 objets uniques de 53 images, le taux observe
+est 0.307 chez les tres petits contre 0.513 chez les controles.</p>
+<p>Apres ajustement et cross-fitting groupe par image, l'AIPW principal estime
+-0.368, avec un intervalle bootstrap [-0.530 ; -0.166]. Les sensibilites
+restent negatives en valeur ponctuelle, mais le clipping 0.02 donne un
+intervalle traversant zero. L'arbre honnete suggere un effet plus negatif
+dans les tuiles denses, mais ce sous-groupe ne contient que 12 images. Je
+presente donc un signal coherent mais observationnel, limite par la
+positivite, les confounders non observes, le sous-ensemble et la definition
+imparfaite d'une intervention sur la taille.</p>
+</blockquote>
+<h2>15. Phrases interdites et corrections</h2>
+<p>Mauvais :</p>
+<blockquote>
+<p>OBB est toujours meilleur que HBB.</p>
+</blockquote>
+<p>Correct :</p>
+<blockquote>
+<p>OBB-1024 obtient la meilleure mAP50-95 dans ce protocole ; OBB-640 et HBB-640
+sont presque egaux.</p>
+</blockquote>
+<p>Mauvais :</p>
+<blockquote>
+<p>Les petits objets causent exactement 36.8 % d'erreurs en plus.</p>
+</blockquote>
+<p>Correct :</p>
+<blockquote>
+<p>Sous les hypotheses d'identification, l'effet moyen AIPW est une baisse
+estimee de 36.8 points de probabilite, avec incertitude et sensibilite.</p>
+</blockquote>
+<p>Mauvais :</p>
+<blockquote>
+<p>L'arbre prouve que la densite est la cause.</p>
+</blockquote>
+<p>Correct :</p>
+<blockquote>
+<p>L'arbre suggere une heterogeneite selon la densite ; la division est
+exploratoire et repose sur peu d'images dans une feuille.</p>
+</blockquote>
+<p>Mauvais :</p>
+<blockquote>
+<p>L'intervalle principal exclut zero, donc aucun biais n'est possible.</p>
+</blockquote>
+<p>Correct :</p>
+<blockquote>
+<p>L'intervalle quantifie l'incertitude d'echantillonnage du score dans ce
+protocole ; il ne couvre pas les confounders non observes ni toutes les
+decisions de modelisation.</p>
+</blockquote>
+<h2>16. Grille de memorisation</h2>
+<p>Completer sans regarder :</p>
+<table>
+<thead>
+<tr>
+  <th>Element</th>
+  <th>Valeur a connaitre</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Images train / validation</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Tuiles train / validation</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Meilleur modele</td>
+  <td></td>
+</tr>
+<tr>
+  <td>mAP50-95 du meilleur modele</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Recall du meilleur modele</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Nombre d'objets causaux</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Nombre d'images causales</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Seuil tres petit</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Taux Y traite / controle</td>
+  <td></td>
+</tr>
+<tr>
+  <td>AIPW et IC</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Recouvrement 0.1-0.9</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Coupure de l'arbre</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Effet de la feuille dense</td>
+  <td></td>
+</tr>
+<tr>
+  <td>Sensibilite qui traverse zero</td>
+  <td></td>
+</tr>
+</tbody>
+</table>
+<p>Si une valeur est oubliee, ne pas inventer. Revenir au tableau correspondant
+et reconstruire son sens.</p>
+</section><section class="document" id="doc-05-exercices-sans-corrige"><div class="source-label">05_exercices_sans_corrige.md</div><h1>Exercices sans corrige</h1>
+<p>Ne pas ouvrir <code>07_corrige.md</code> avant d'avoir ecrit ou prononce une reponse.</p>
+<h2>Detection</h2>
+<h3>D1 - IoU</h3>
+<p>Deux boites de surface 120 et 80 ont une intersection de surface 50.</p>
+<ol>
+<li>Calculer l'union.</li>
+<li>Calculer l'IoU.</li>
+<li>Dire si la detection passe un seuil IoU de 0.50.</li>
+</ol>
+<h3>D2 - Deux boites pour un objet</h3>
+<p>Un objet reel <code>plane</code> recoit deux predictions <code>plane</code> :</p>
+<ul>
+<li>A : confiance 0.92, IoU 0.72 ;</li>
+<li>B : confiance 0.70, IoU 0.66.</li>
+</ul>
+<p>Expliquer :</p>
+<ol>
+<li>pourquoi les deux predictions ne doivent pas devenir deux TP ;</li>
+<li>le role possible de la NMS ;</li>
+<li>ce qui peut arriver a B apres le matching.</li>
+</ol>
+<h3>D3 - Matrice de confusion de detection</h3>
+<p>Un modele produit 80 detections. Parmi elles, 52 sont des TP. Le dataset
+contient 65 objets reels.</p>
+<ol>
+<li>Calculer FP.</li>
+<li>Calculer FN.</li>
+<li>Calculer precision.</li>
+<li>Calculer recall.</li>
+<li>Calculer F1.</li>
+</ol>
+<h3>D4 - Seuil de confiance</h3>
+<p>On augmente le seuil de confiance de 0.20 a 0.70.</p>
+<ol>
+<li>Quel mouvement general attend-on pour precision ?</li>
+<li>Quel mouvement general attend-on pour recall ?</li>
+<li>Pourquoi ce n'est pas une loi absolue sur chaque petit echantillon ?</li>
+</ol>
+<h3>D5 - mAP</h3>
+<p>Expliquer sans formule :</p>
+<ol>
+<li>AP ;</li>
+<li>mAP ;</li>
+<li>mAP50 ;</li>
+<li>mAP50-95 ;</li>
+<li>pourquoi il faut aussi AP par classe.</li>
+</ol>
+<h3>D6 - HBB et OBB</h3>
+<p>Dessiner un rectangle diagonal long et fin.</p>
+<ol>
+<li>Dessiner sa HBB.</li>
+<li>Dessiner son OBB.</li>
+<li>Comparer la quantite de fond.</li>
+<li>Expliquer un effet possible sur IoU et NMS.</li>
+<li>Donner une raison pour laquelle OBB pourrait quand meme moins bien scorer
+dans une experience courte.</li>
+</ol>
+<h3>D7 - Petite erreur, grand effet</h3>
+<p>Un petit objet mesure environ 8 x 8 pixels. La prediction est decalee de
+4 pixels. Un grand objet mesure 160 x 160 pixels et subit le meme decalage.</p>
+<p>Expliquer qualitativement pourquoi l'IoU du petit objet est plus affectee.</p>
+<h3>D8 - Loss et metrique</h3>
+<p>Repondre a l'affirmation :</p>
+<blockquote>
+<p>La loss train a baisse, donc le modele final est forcement meilleur.</p>
+</blockquote>
+<p>Donner au moins trois raisons pour lesquelles cette conclusion est insuffisante.</p>
+<h2>Pipeline et donnees</h2>
+<h3>P1 - Fuite par tuiles</h3>
+<p>Une image DOTA est decoupee en 30 tuiles. On melange les 30 tuiles, puis on en
+place 24 en train et 6 en validation.</p>
+<ol>
+<li>Identifier la fuite.</li>
+<li>Expliquer pourquoi la validation devient optimiste.</li>
+<li>Proposer le bon ordre des operations.</li>
+</ol>
+<h3>P2 - Positions de grille</h3>
+<p>Une dimension d'image vaut 2500 pixels, la tuile 1024 et le stride 824.</p>
+<ol>
+<li>Les deux premieres positions sont 0 et 824.</li>
+<li>Calculer la position finale qui couvre exactement le bord.</li>
+<li>Expliquer pourquoi elle ne suit pas forcement le stride.</li>
+<li>Dire si un chevauchement final existe.</li>
+</ol>
+<h3>P3 - Fragments</h3>
+<p>Classer les cas :</p>
+<ul>
+<li>objet conserve a 95 % ;</li>
+<li>objet conserve a 75 % ;</li>
+<li>objet conserve a 45 % ;</li>
+<li>objet conserve a 10 %.</li>
+</ul>
+<p>Utiliser les seuils 0.70 et 0.20 du pipeline et expliquer chaque decision.</p>
+<h3>P4 - Tuiles negatives</h3>
+<ol>
+<li>Pourquoi ne pas supprimer toutes les tuiles negatives ?</li>
+<li>Pourquoi ne pas garder toutes les tuiles negatives ?</li>
+<li>Quel type d'erreur est directement concerne ?</li>
+</ol>
+<h3>P5 - Stratification</h3>
+<p>La selection couvre les 15 classes et combine classe dominante et densite.</p>
+<ol>
+<li>Pourquoi est-ce mieux qu'un simple tirage aleatoire ?</li>
+<li>Pourquoi cela ne resout-il pas completement le desequilibre ?</li>
+<li>Pourquoi la validation ne doit-elle pas etre artificiellement equilibree
+sans explication ?</li>
+</ol>
+<h3>P6 - Objet duplique</h3>
+<p>Un objet apparait dans deux tuiles train chevauchantes.</p>
+<ol>
+<li>Est-ce une fuite train-validation ?</li>
+<li>Pourquoi faut-il quand meme le tracer ?</li>
+<li>Pourquoi l'analyse causale choisit-elle une seule instance ?</li>
+</ol>
+<h3>P7 - Reproductibilite</h3>
+<p>Donner au moins huit elements a enregistrer pour reproduire un run.</p>
+<h3>P8 - Comparaison equitable</h3>
+<p>On compare :</p>
+<ul>
+<li>HBB initialise avec COCO ;</li>
+<li>OBB initialise avec un poids deja ajuste sur DOTA.</li>
+</ul>
+<p>Expliquer le probleme et proposer un protocole plus equitable.</p>
+<h2>Causalite</h2>
+<h3>C1 - Smoking, gene, cancer</h3>
+<p>Construire un DAG ou :</p>
+<ul>
+<li>le gene influence smoking ;</li>
+<li>le gene influence cancer ;</li>
+<li>smoking influence cancer.</li>
+</ul>
+<ol>
+<li>Quel est le traitement ?</li>
+<li>Quel est l'outcome ?</li>
+<li>Quel est le confounder ?</li>
+<li>Sur quoi faut-il ajuster pour l'effet total de smoking ?</li>
+</ol>
+<h3>C2 - Confounder DOTA</h3>
+<p>Utiliser <code>classe</code>, <code>tres petit</code> et <code>detection correcte</code>.</p>
+<ol>
+<li>Construire un backdoor path.</li>
+<li>Expliquer le biais sans ajustement.</li>
+<li>Expliquer ce que l'ajustement essaie de faire.</li>
+</ol>
+<h3>C3 - Mediator</h3>
+<p>Proposer un mediator entre petite taille et detection. Expliquer pourquoi
+l'ajuster ne donne plus l'effet total.</p>
+<h3>C4 - Collider</h3>
+<p>Construire un collider avec <code>petite taille</code>, <code>scene complexe</code> et
+<code>tuile selectionnee</code>. Expliquer pourquoi conditionner sur la selection peut
+ouvrir un chemin.</p>
+<h3>C5 - Variables post-traitement</h3>
+<p>Classer ces variables comme ajustement plausible ou variable a eviter dans le
+modele principal :</p>
+<ul>
+<li>classe ;</li>
+<li>orientation ;</li>
+<li>score de confiance ;</li>
+<li>IoU ;</li>
+<li>source ;</li>
+<li>GSD ;</li>
+<li>feature interne du detecteur ;</li>
+<li>densite ;</li>
+<li>aire exacte lorsque le traitement est defini par l'aire.</li>
+</ul>
+<h3>C6 - Outcomes potentiels</h3>
+<p>Pour un objet donne, definir <code>Y(1)</code> et <code>Y(0)</code>. Expliquer pourquoi les deux ne
+sont jamais observes ensemble.</p>
+<h3>C7 - Hypotheses</h3>
+<p>Donner une definition intuitive et une menace DOTA pour :</p>
+<ol>
+<li>exchangeabilite conditionnelle ;</li>
+<li>positivite ;</li>
+<li>coherence ;</li>
+<li>absence d'interference ;</li>
+<li>absence de fuite.</li>
+</ol>
+<h3>C8 - Difference brute</h3>
+<p>Taux de detection :</p>
+<ul>
+<li>tres petits : 0.18 ;</li>
+<li>controles : 0.43.</li>
+</ul>
+<ol>
+<li>Calculer la difference brute.</li>
+<li>L'exprimer en points de pourcentage.</li>
+<li>Expliquer pourquoi elle n'est pas automatiquement causale.</li>
+</ol>
+<h3>C9 - Score de propension</h3>
+<p>Deux objets ont des scores 0.03 et 0.52.</p>
+<ol>
+<li>Lequel a le meilleur support commun ?</li>
+<li>Pourquoi le premier peut creer un poids extreme ?</li>
+<li>Que fait le clipping ?</li>
+<li>Quelle limite le clipping ne resout-il pas ?</li>
+</ol>
+<h3>C10 - IPW</h3>
+<p>Un objet traite a <code>e(X)=0.20</code>.</p>
+<ol>
+<li>Quel est son poids IPW non stabilise ?</li>
+<li>Pourquoi un traite avec faible propension recoit-il un grand poids ?</li>
+<li>Quel est le danger ?</li>
+</ol>
+<h3>C11 - AIPW</h3>
+<p>Expliquer les deux sources d'information combinees par AIPW. Definir
+&quot;doublement robuste&quot; sans dire &quot;toujours sans biais&quot;.</p>
+<h3>C12 - Cross-fitting</h3>
+<ol>
+<li>Pourquoi ne pas predire les nuisances sur les memes objets qui les ont
+entrainees ?</li>
+<li>Pourquoi grouper par image ?</li>
+<li>Quelle ressemblance avec une prediction hors echantillon ?</li>
+</ol>
+<h3>C13 - Arbre causal honnete</h3>
+<ol>
+<li>Quelle moitie choisit les divisions ?</li>
+<li>Quelle moitie estime les effets des feuilles ?</li>
+<li>Pourquoi separer ?</li>
+<li>Pourquoi limiter profondeur et taille minimale ?</li>
+</ol>
+<h3>C14 - Sensibilite</h3>
+<p>Le signe AIPW est negatif a IoU 0.40, 0.50 et 0.60, mais l'amplitude double a
+0.60.</p>
+<ol>
+<li>Quelle partie est stable ?</li>
+<li>Quelle partie est sensible ?</li>
+<li>Quelle conclusion prudente donner ?</li>
+</ol>
+<h2>Analyse des sorties reelles</h2>
+<p>Ces exercices utilisent les fichiers dans <code>outputs/analysis/</code>.</p>
+<h3>R1 - Comparaison globale</h3>
+<p>Ouvrir <code>model_comparison.csv</code>.</p>
+<ol>
+<li>Quel modele a la meilleure mAP50 ?</li>
+<li>Quel modele a la meilleure mAP50-95 ?</li>
+<li>Quel est le gain ou la perte absolue ?</li>
+<li>La resolution 1024 aide-t-elle ?</li>
+<li>Proposer deux explications et une limite.</li>
+</ol>
+<h3>R2 - Classes</h3>
+<p>Ouvrir <code>per_class_metrics.csv</code>.</p>
+<ol>
+<li>Identifier les trois meilleures et trois pires classes du modele retenu.</li>
+<li>Comparer avec les comptes de <code>class_coverage.csv</code>.</li>
+<li>Donner un cas ou frequence et AP ne suivent pas exactement la meme tendance.</li>
+</ol>
+<h3>R3 - Taille et orientation</h3>
+<p>Ouvrir <code>detection_by_size_orientation.png</code>.</p>
+<ol>
+<li>Quel groupe semble le plus difficile ?</li>
+<li>Les differences sont-elles monotones ?</li>
+<li>Quels effectifs faudrait-il verifier avant de conclure ?</li>
+</ol>
+<h3>R4 - Effet moyen</h3>
+<p>Ouvrir <code>causal_effect_estimates.csv</code>.</p>
+<ol>
+<li>Comparer brut, g-computation, IPW et AIPW.</li>
+<li>Le signe est-il stable ?</li>
+<li>L'IC AIPW inclut-il zero ?</li>
+<li>Ecrire une interpretation correcte en deux phrases.</li>
+</ol>
+<h3>R5 - Positivite</h3>
+<p>Ouvrir <code>propensity_overlap.png</code>.</p>
+<ol>
+<li>Les distributions se chevauchent-elles ?</li>
+<li>Y a-t-il des zones presque sans controles ou traites ?</li>
+<li>Quelle consequence pour la variance et la generalisation ?</li>
+</ol>
+<h3>R6 - Heterogeneite</h3>
+<p>Ouvrir <code>causal_tree_subgroups.csv</code> et <code>cate_distribution.png</code>.</p>
+<ol>
+<li>Quelle feuille a l'effet le plus negatif ?</li>
+<li>Combien d'images et d'objets contient-elle ?</li>
+<li>Quelle variable semble structurer les effets ?</li>
+<li>Pourquoi ne faut-il pas transformer cette feuille en loi generale ?</li>
+</ol>
+<h2>Mini-examen final</h2>
+<p>Temps conseille : 35 minutes, sans documents.</p>
+<ol>
+<li>Dessiner le pipeline complet.</li>
+<li>Definir IoU, precision, recall, AP et mAP.</li>
+<li>Expliquer le choix OBB.</li>
+<li>Expliquer le risque de fuite par tuile.</li>
+<li>Justifier le sous-ensemble stratifie.</li>
+<li>Definir D, Y, X et ATE.</li>
+<li>Dessiner le DAG DOTA principal.</li>
+<li>Distinguer confounder, mediator et collider.</li>
+<li>Expliquer exchangeabilite et positivite.</li>
+<li>Comparer difference brute, g-computation, IPW et AIPW.</li>
+<li>Expliquer cross-fitting et bootstrap groupe.</li>
+<li>Expliquer arbre causal honnete.</li>
+<li>Donner les resultats reels principaux.</li>
+<li>Donner cinq limites.</li>
+<li>Conclure en 90 secondes sans confondre prediction et causalite.</li>
+</ol>
+</section><section class="document" id="doc-06-questions-orales"><div class="source-label">06_questions_orales.md</div><h1>Questions orales avec reponses courtes</h1>
+<p>Lire seulement la question, repondre, puis reveler la reponse.</p>
+<h2>Projet et donnees</h2>
+<h3>1. Quel est l'objectif du projet ?</h3>
+<p>Detecter et classifier des objets dans des images DOTA, puis estimer si la
+condition tres petite affecte la probabilite de detection correcte. La premiere
+partie est predictive, la seconde causale.</p>
+<h3>2. Pourquoi DOTA est-il difficile ?</h3>
+<p>Les images sont grandes, les objets varient fortement en taille, peuvent etre
+minuscules, denses et orientes, et les 15 classes sont desequilibrees.</p>
+<h3>3. Que contient une annotation DOTA ?</h3>
+<p>Quatre coins, donc huit coordonnees, une classe et un indicateur <code>difficult</code>.
+Le fichier contient aussi des metadonnees comme la source et parfois le GSD.</p>
+<h3>4. Pourquoi tuiler ?</h3>
+<p>Les images completes sont trop grandes pour un detecteur standard et les petits
+objets seraient fortement reduits. Les tuiles rendent le calcul faisable et
+preservent davantage de pixels par objet.</p>
+<h3>5. Quel est le principal risque du tuilage ?</h3>
+<p>La fuite si des tuiles d'une meme image source sont reparties entre train et
+validation. Le split doit etre fait au niveau de l'image avant le tuilage.</p>
+<h3>6. Pourquoi 1024 pixels ?</h3>
+<p>C'est un compromis entre contexte, preservation des petits objets, nombre de
+fragments et memoire GPU. Ce n'est pas une valeur universelle.</p>
+<h3>7. Pourquoi un chevauchement en train ?</h3>
+<p>Il augmente les chances qu'un objet proche du bord soit entier dans une autre
+tuile et enrichit les positions vues pendant l'apprentissage.</p>
+<h3>8. Pourquoi moins de chevauchement en validation ?</h3>
+<p>Pour eviter une evaluation trop redondante et ne pas compter plusieurs fois les
+memes objets. Une instance unique est ensuite gardee pour la causalite.</p>
+<h3>9. Pourquoi garder des tuiles negatives ?</h3>
+<p>Elles apprennent au modele a reconnaitre le fond et reduisent les fausses
+alertes. Toutes les garder ferait dominer le fond et couterait trop cher.</p>
+<h3>10. Que signifie stratifier ici ?</h3>
+<p>Selectionner des images en preservant la couverture des classes et des types de
+scene definis par classe dominante et densite, plutot que tirer aveuglement.</p>
+<h2>Detection et YOLO</h2>
+<h3>11. Detection ou classification ?</h3>
+<p>La classification donne surtout une classe globale. La detection donne
+plusieurs classes et leurs localisations dans la meme image.</p>
+<h3>12. HBB ou OBB ?</h3>
+<p>HBB est alignee aux axes. OBB tourne avec l'objet. OBB correspond mieux aux
+annotations et objets orientes de DOTA.</p>
+<h3>13. Pourquoi garder HBB ?</h3>
+<p>Elle fournit une baseline simple sur exactement les memes tuiles et permet de
+quantifier ce que change la representation orientee.</p>
+<h3>14. Qu'est-ce que l'IoU ?</h3>
+<p>Le rapport entre l'aire d'intersection et l'aire d'union des boites. Elle mesure
+la qualite geometrique de la localisation entre 0 et 1.</p>
+<h3>15. Quand une prediction est-elle un TP ?</h3>
+<p>Quand elle est associee a un objet reel, a la bonne classe, avec un score
+suffisant et une IoU au-dessus du seuil choisi.</p>
+<h3>16. Difference FP/FN ?</h3>
+<p>FP est une alerte non correcte. FN est un objet reel manque. Une mauvaise
+classification peut produire les deux simultanement.</p>
+<h3>17. Precision ?</h3>
+<p>Parmi les detections annoncees, proportion correcte : TP divise par TP plus FP.</p>
+<h3>18. Recall ?</h3>
+<p>Parmi les objets reels, proportion retrouvee : TP divise par TP plus FN.</p>
+<h3>19. AP ?</h3>
+<p>Aire sous la courbe precision-recall d'une classe quand le seuil de confiance
+varie.</p>
+<h3>20. mAP ?</h3>
+<p>Moyenne des AP sur les classes. Elle resume le detecteur, mais doit etre
+completee par les scores par classe et sous-groupe.</p>
+<h3>21. mAP50 contre mAP50-95 ?</h3>
+<p>mAP50 utilise un seuil IoU 0.50. mAP50-95 moyenne plusieurs seuils jusqu'a
+0.95 et exige une localisation plus precise.</p>
+<h3>22. Score de confiance ?</h3>
+<p>Valeur utilisee pour classer et filtrer les detections. Elle n'est ni une
+garantie de justesse ni une mesure directe de l'IoU.</p>
+<h3>23. NMS ?</h3>
+<p>Post-traitement qui garde une boite forte et supprime des boites redondantes
+trop chevauchantes. Elle peut supprimer de vrais voisins en scene dense.</p>
+<h3>24. Backbone ?</h3>
+<p>Partie qui extrait les caracteristiques visuelles des pixels, des motifs simples
+jusqu'aux representations plus semantiques.</p>
+<h3>25. Neck ?</h3>
+<p>Partie qui combine les features de plusieurs echelles, importante pour detecter
+a la fois grands terrains et petits vehicules.</p>
+<h3>26. Head ?</h3>
+<p>Partie qui transforme les features en classes, scores et boites. La head OBB
+represente aussi l'orientation.</p>
+<h3>27. Que minimise YOLO ?</h3>
+<p>Une loss combinant erreurs de localisation, classification et autres
+composantes, avec une composante d'angle dans OBB.</p>
+<h3>28. Loss contre mAP ?</h3>
+<p>La loss guide l'optimisation sur train. La mAP evalue les detections sur
+validation. Une loss plus basse ne garantit pas une meilleure mAP.</p>
+<h3>29. Transfert learning ?</h3>
+<p>Partir d'un backbone pre-entraine sur COCO puis l'ajuster sur DOTA. Cela
+economise donnees et temps par rapport a un depart aleatoire.</p>
+<h3>30. Pourquoi les memes poids de depart ?</h3>
+<p>Pour comparer HBB et OBB sans donner a OBB l'avantage de poids deja ajustes sur
+DOTA.</p>
+<h3>31. Pourquoi les petits objets sont-ils difficiles ?</h3>
+<p>Peu de pixels, perte au redimensionnement, bruit de fond, densite et forte
+sensibilite de l'IoU a quelques pixels d'erreur.</p>
+<h3>32. Pourquoi augmenter <code>imgsz</code> ?</h3>
+<p>Le reseau voit davantage de pixels par petit objet. En contrepartie, le calcul
+et la memoire augmentent et le batch doit parfois diminuer.</p>
+<h3>33. Overfitting ?</h3>
+<p>Le modele s'ameliore sur train mais ne generalise plus : validation stagne ou
+baisse. On examine les courbes et utilise notamment l'early stopping.</p>
+<h3>34. Pourquoi AP par classe ?</h3>
+<p>La moyenne peut cacher une classe rare presque jamais detectee ou une classe
+frequente tres facile.</p>
+<h2>Causalite</h2>
+<h3>35. Correlation contre causalite ?</h3>
+<p>La correlation decrit une difference observee. La causalite compare ce qui
+arriverait sous deux conditions contrefactuelles, avec des hypotheses
+d'identification.</p>
+<h3>36. Traitement retenu ?</h3>
+<p>Etre dans le premier quartile d'aire relative de tuile, seuil defini sur les
+objets train uniques.</p>
+<h3>37. Outcome retenu ?</h3>
+<p>Une prediction OBB de meme classe, confiance au moins 0.25 et IoU au moins
+0.50 sur la validation.</p>
+<h3>38. ATE ?</h3>
+<p>Moyenne de <code>Y(1)-Y(0)</code> dans la population d'objets analysee. Ici, une difference
+de probabilite de detection correcte.</p>
+<h3>39. Confounder ?</h3>
+<p>Cause commune du traitement et de l'outcome. La classe peut influencer taille
+typique et facilite de detection.</p>
+<h3>40. Mediator ?</h3>
+<p>Variable causee par le traitement qui transmet son effet. L'ajuster bloque une
+partie de l'effet total.</p>
+<h3>41. Collider ?</h3>
+<p>Consequence commune de deux variables. Conditionner dessus peut ouvrir une
+association artificielle.</p>
+<h3>42. Backdoor path ?</h3>
+<p>Chemin non causal entre traitement et outcome qui commence par une fleche
+entrant dans le traitement, par exemple <code>D &lt;- classe -&gt; Y</code>.</p>
+<h3>43. Pourquoi ne pas ajuster sur l'aire exacte ?</h3>
+<p>Elle definit directement le traitement tres petit. L'inclure rendrait les
+groupes presque deterministes et ne correspondrait pas a l'ajustement retenu.</p>
+<h3>44. Pourquoi ne pas ajuster sur la confiance ?</h3>
+<p>La confiance est produite apres le traitement par le detecteur et participe a
+la definition de l'outcome. C'est une variable post-traitement.</p>
+<h3>45. Exchangeabilite ?</h3>
+<p>Apres ajustement sur X, les groupes seraient comparables quant aux outcomes
+potentiels. Elle est non testable et menacee par le flou ou contraste non
+observe.</p>
+<h3>46. Positivite ?</h3>
+<p>Pour chaque profil, il faut une probabilite non nulle d'etre traite et controle.
+Des classes toujours minuscules violent localement cette hypothese.</p>
+<h3>47. Coherence ?</h3>
+<p>L'outcome observe sous le traitement recu correspond a l'outcome potentiel de
+ce traitement. Elle demande une version suffisamment bien definie de &quot;petit&quot;.</p>
+<h3>48. Interference ?</h3>
+<p>L'outcome d'un objet pourrait dependre d'autres objets via NMS, occlusion ou
+<code>max_det</code>. Cela fragilise l'independance entre unites.</p>
+<h3>49. Difference brute ?</h3>
+<p>Taux moyen traite moins taux moyen controle. Simple mais confondu par les
+differences de composition.</p>
+<h3>50. G-computation ?</h3>
+<p>Modeliser l'outcome sous D=1 et D=0 pour chaque X, calculer les deux predictions
+et moyenner leur difference.</p>
+<h3>51. Score de propension ?</h3>
+<p>Probabilite de traitement conditionnelle aux covariables. Il sert a ajuster et
+diagnostiquer le support, pas a supprimer les confounders non observes.</p>
+<h3>52. IPW ?</h3>
+<p>Pondere les objets par l'inverse de la probabilite de leur traitement observe.
+Les scores extremes rendent l'estimation instable.</p>
+<h3>53. AIPW ?</h3>
+<p>Combine modele d'outcome et propension, puis corrige les predictions avec des
+residus ponderes. Double robustesse ne signifie pas absence de toutes limites.</p>
+<h3>54. Cross-fitting ?</h3>
+<p>Les nuisances d'un objet sont predites par des modeles qui n'ont pas utilise
+son fold. Les folds sont groupes par image pour limiter l'overfitting et la
+dependance.</p>
+<h3>55. Pourquoi bootstrap par image ?</h3>
+<p>Les objets d'une meme image partagent contexte et conditions. Les
+reechantillonner comme independants donnerait une incertitude trop petite.</p>
+<h3>56. Arbre causal honnete ?</h3>
+<p>Une partie des images choisit les divisions, l'autre estime les effets des
+feuilles. Cela limite le biais de recherche de sous-groupes.</p>
+<h3>57. CATE ?</h3>
+<p>Effet moyen conditionnel a un profil X. Il sert a etudier l'heterogeneite,
+mais les estimations extremes demandent de grands effectifs et validation.</p>
+<h3>58. Sensibilite ?</h3>
+<p>Refaire l'estimation avec d'autres seuils raisonnables, par exemple IoU ou
+clipping, pour voir si signe et amplitude dependent d'un choix arbitraire.</p>
+<h3>59. Pourquoi le resultat reste-t-il prudent ?</h3>
+<p>Le traitement n'est pas randomise, des confounders manquent peut-etre, la
+selection et l'interference existent, et la population est un sous-ensemble.</p>
+<h3>60. Conclusion type ?</h3>
+<p>Le detecteur fournit des performances predictives mesurees sur validation. La
+partie causale estime ensuite un contraste sur les erreurs, sous des hypotheses
+fortes. Les deux reponses sont complementaires mais non interchangeables.</p>
+</section><section class="document" id="doc-07-corrige"><div class="source-label">07_corrige.md</div><h1>Corrige des exercices</h1>
+<h2>Detection</h2>
+<h3>D1</h3>
+<pre><code class="language-text">union = 120 + 80 - 50 = 150
+IoU = 50 / 150 = 0.333
+</code></pre>
+<p>La detection ne passe pas le seuil 0.50.</p>
+<h3>D2</h3>
+<p>Une prediction ne peut valider qu'un objet et un objet ne doit recevoir qu'un
+TP. La NMS peut supprimer B avant l'evaluation si les deux boites se
+chevauchent assez. Sinon le matching associe normalement A a l'objet et B reste
+non associee, donc peut compter comme FP.</p>
+<h3>D3</h3>
+<pre><code class="language-text">FP = 80 - 52 = 28
+FN = 65 - 52 = 13
+precision = 52 / 80 = 0.650
+recall = 52 / 65 = 0.800
+F1 = 2 * 0.65 * 0.80 / (0.65 + 0.80) = 0.717
+</code></pre>
+<h3>D4</h3>
+<p>En general, precision monte et recall baisse parce que moins de predictions
+sont gardees. Sur un petit echantillon, la composition et l'ordre des scores
+peuvent produire des variations non monotones de certaines statistiques.</p>
+<h3>D5</h3>
+<ul>
+<li>AP : resume la courbe precision-recall d'une classe.</li>
+<li>mAP : moyenne les AP des classes.</li>
+<li>mAP50 : matching avec seuil IoU 0.50.</li>
+<li>mAP50-95 : moyenne plusieurs seuils, donc localisation plus exigeante.</li>
+<li>AP par classe : revele les classes cachees par la moyenne.</li>
+</ul>
+<h3>D6</h3>
+<p>La HBB contient plus de fond autour du rectangle diagonal. L'OBB suit son axe.
+La HBB peut augmenter le chevauchement avec le fond et des voisins, degrader la
+precision geometrique et rendre la NMS plus confuse. OBB peut quand meme moins
+bien scorer si la tete orientee, plus complexe, est sous-entrainee ou si la
+metrique orientee est plus stricte.</p>
+<h3>D7</h3>
+<p>Le decalage represente la moitie de la largeur du petit objet mais seulement
+2.5 % de celle du grand. La fraction d'intersection chute donc beaucoup plus
+pour le petit objet.</p>
+<h3>D8</h3>
+<p>Il faut verifier validation, pas seulement train. La loss n'est pas la mAP, un
+overfitting est possible, les classes peuvent reagir differemment, et le
+checkpoint a meilleure validation peut preceder la derniere epoque.</p>
+<h2>Pipeline</h2>
+<h3>P1</h3>
+<p>Les tuiles partagent le meme paysage et parfois des objets. La validation
+reconnait des motifs deja vus. Il faut d'abord repartir les images sources,
+puis tuiler chaque split separement.</p>
+<h3>P2</h3>
+<pre><code class="language-text">position finale = 2500 - 1024 = 1476
+</code></pre>
+<p>Les positions sont <code>[0, 824, 1476]</code>. La derniere est forcee pour couvrir le
+bord et chevauche la tuile precedente de <code>824 + 1024 - 1476 = 372</code> pixels.</p>
+<h3>P3</h3>
+<ul>
+<li>95 % : garde ;</li>
+<li>75 % : garde ;</li>
+<li>45 % : zone ambigue, tuile rejetee ;</li>
+<li>10 % : fragment ignore.</li>
+</ul>
+<h3>P4</h3>
+<p>Les negatives enseignent le fond et reduisent les FP. Toutes les garder ferait
+dominer le train par le fond. L'erreur directement concernee est le faux
+positif.</p>
+<h3>P5</h3>
+<p>La stratification augmente la couverture des classes et scenes. Elle ne cree
+pas d'exemples pour une classe vraiment rare et ne garantit pas des comptes
+egaux. Une validation artificiellement equilibree ne representerait plus la
+population sans une definition explicite de la metrique cible.</p>
+<h3>P6</h3>
+<p>Ce n'est pas une fuite si les deux tuiles restent train. La duplication change
+le poids de l'objet dans la loss et doit etre tracee. En causalite, garder deux
+instances donnerait plus de poids a certains objets et violerait l'unite
+d'analyse.</p>
+<h3>P7</h3>
+<p>Exemples : code, donnees/split, graine, versions Python/PyTorch/Ultralytics,
+GPU/CUDA, poids de depart, architecture, epochs, batch, taille d'image,
+optimiseur, patience, augmentations, seuils, checkpoint et temps.</p>
+<h3>P8</h3>
+<p>OBB beneficie d'une information specifique a DOTA avant l'experience. Il faut
+partir du meme pre-entrainement general, ici COCO, et ajuster chaque tete sur
+les memes tuiles avec le meme split et la meme graine.</p>
+<h2>Causalite</h2>
+<h3>C1</h3>
+<pre><code class="language-text">Gene -&gt; Smoking -&gt; Cancer
+  \----------------&gt; Cancer
+</code></pre>
+<p>Traitement : smoking. Outcome : cancer. Confounder : gene. Pour l'effet total,
+ajuster sur gene sous les hypotheses du DAG.</p>
+<h3>C2</h3>
+<pre><code class="language-text">Tres petit &lt;- Classe -&gt; Detection correcte
+</code></pre>
+<p>Les classes ont des tailles et difficultes differentes. Sans ajustement, leur
+composition contamine la comparaison. L'ajustement compare des objets ayant des
+profils de classe et autres covariables plus semblables.</p>
+<h3>C3</h3>
+<p>Exemple : qualite des features extraites. Petite taille reduit l'information,
+qui influence la detection. Ajuster dessus retire ce chemin et vise plutot un
+effet direct.</p>
+<h3>C4</h3>
+<pre><code class="language-text">Petite taille -&gt; Tuile selectionnee &lt;- Scene complexe
+</code></pre>
+<p>Conditionner sur la selection peut rendre petite taille et complexite associees
+dans l'echantillon retenu, ouvrant un chemin vers l'outcome.</p>
+<h3>C5</h3>
+<p>Ajustements plausibles : classe, orientation, source, GSD, densite. A eviter :
+confiance, IoU et feature interne car post-traitement/outcome ; aire exacte car
+elle definit D dans ce protocole.</p>
+<h3>C6</h3>
+<p><code>Y(1)</code> est la detection si l'objet etait tres petit, <code>Y(0)</code> s'il ne l'etait
+pas. L'objet n'a qu'une condition observee ; l'autre est contrefactuelle.</p>
+<h3>C7</h3>
+<ul>
+<li>Exchangeabilite : pas de confounding residuel apres X ; menace par flou non
+observe.</li>
+<li>Positivite : les deux traitements possibles pour chaque profil ; menace par
+classes toujours petites.</li>
+<li>Coherence : version de D suffisamment definie ; menace par plusieurs
+mecanismes de petitesse.</li>
+<li>Interference : un objet n'affecte pas l'autre ; menace par NMS.</li>
+<li>Absence de fuite : outcome hors train ; menace par tuiles de meme source.</li>
+</ul>
+<h3>C8</h3>
+<pre><code class="language-text">0.18 - 0.43 = -0.25
+</code></pre>
+<p>Difference de 25 points de pourcentage. Elle peut refleter classe, GSD,
+orientation ou densite, pas seulement la taille.</p>
+<h3>C9</h3>
+<p>0.52 a un meilleur support. A 0.03, un traite aurait un poids environ 33.3.
+Le clipping borne le poids et la variance, mais ne fabrique pas de controles
+comparables et ne corrige pas les confounders non observes.</p>
+<h3>C10</h3>
+<p>Poids <code>1/0.20 = 5</code>. L'objet represente plusieurs profils similaires parce que
+son traitement est rare. Des poids trop grands rendent l'estimation dominee par
+quelques observations.</p>
+<h3>C11</h3>
+<p>AIPW combine predictions d'outcome et propension, puis utilise les residus pour
+corriger. Double robustesse couvre une mauvaise specification de l'un des deux
+modeles sous conditions, pas les variables omises ou la mauvaise positivite.</p>
+<h3>C12</h3>
+<p>Les predictions in-sample overfittent et donnent des pseudo-outcomes biaisés.
+Grouper par image evite que des objets partageant le meme contexte traversent
+les folds. C'est une logique hors echantillon.</p>
+<h3>C13</h3>
+<p>La moitie structure choisit les divisions, la moitie estimation mesure les
+feuilles. Cela evite d'utiliser le meme bruit deux fois. Faible profondeur et
+grandes feuilles reduisent variance et decouvertes artificielles.</p>
+<h3>C14</h3>
+<p>Le signe negatif est stable. L'amplitude depend du niveau d'exigence
+geometrique. Conclusion : la penalite semble robuste en direction, mais sa
+taille exacte est sensible a la definition de l'outcome.</p>
+<h2>Sorties reelles</h2>
+<p>Les reponses R1 a R6 changent avec les runs. Elles doivent etre calculees
+directement depuis <code>outputs/analysis/</code>. La bonne correction est une reponse qui
+cite :</p>
+<ul>
+<li>la valeur exacte ;</li>
+<li>le denominteur ou l'effectif ;</li>
+<li>l'incertitude ;</li>
+<li>une explication plausible ;</li>
+<li>au moins une limite.</li>
+</ul>
+<h2>Grille du mini-examen</h2>
+<p>Attribuer 2 points par item :</p>
+<ul>
+<li>0 : absent ou faux ;</li>
+<li>1 : idee correcte mais incomplete ;</li>
+<li>2 : definition, lien DOTA et limite.</li>
+</ul>
+<p>Score maximal : 30.</p>
+<ul>
+<li>26-30 : solide ;</li>
+<li>21-25 : defendable, quelques fragilites ;</li>
+<li>15-20 : revoir les cartes prioritaires ;</li>
+<li>moins de 15 : reprendre le parcours reduit de 3 heures.</li>
+</ul>
+</section><section class="document" id="doc-concepts-oraux-ml-causalite"><div class="source-label">concepts_oraux_ml_causalite.md</div><h1>Concepts oraux a maitriser - ML, detection, causalite</h1>
+<p>Objectif du fichier : identifier les concepts a etudier pour etre capable de defendre le projet a l'oral.</p>
+<p>Ce fichier n'est pas encore un cours complet. Il sert de carte de travail :</p>
+<ul>
+<li>quoi apprendre ;</li>
+<li>pourquoi le professeur peut le demander ;</li>
+<li>lien avec le projet DOTA / YOLO-OBB ;</li>
+<li>niveau de priorite ;</li>
+<li>statut de maitrise.</li>
+</ul>
+<p>Derniere mise a jour : 2026-07-29</p>
+<hr />
+<h2>1. Diagnostic global</h2>
+<p>Le notebook avance correctement, mais la presentation du 2026-07-09 a revele un risque important : certaines questions conceptuelles simples peuvent bloquer si elles ne sont pas preparees.</p>
+<p>Questions deja posees par le professeur :</p>
+<ul>
+<li>schema causal avec <code>smoking</code>, <code>cancer</code>, <code>cancer gene</code> ;</li>
+<li>explication de l'IoU dans le contexte de YOLO.</li>
+</ul>
+<p>Conclusion :</p>
+<ul>
+<li>il ne suffit pas d'avoir du code ;</li>
+<li>il faut pouvoir expliquer les concepts sans support immediat ;</li>
+<li>les concepts ML et causalite doivent etre etudies en parallele du notebook.</li>
+</ul>
+<hr />
+<h2>2. Niveaux de priorite</h2>
+<h3>Priorite 0 - A maitriser en premier</h3>
+<p>Concepts qui peuvent etre demandes directement et qui sont centraux.</p>
+<h3>Priorite 1 - A maitriser pour defendre le pipeline</h3>
+<p>Concepts importants pour expliquer les choix techniques du projet.</p>
+<h3>Priorite 2 - A maitriser pour la suite du rapport</h3>
+<p>Concepts qui deviendront centraux dans les parties causalite et interpretation.</p>
+<hr />
+<h2>3. Statuts possibles</h2>
+<ul>
+<li><code>A faire</code> : pas encore etudie serieusement.</li>
+<li><code>Fragile</code> : deja vu, mais pas encore defendable oralement.</li>
+<li><code>Correct</code> : explicable simplement, mais a renforcer.</li>
+<li><code>Solide</code> : explicable avec exemple, limites et lien au projet.</li>
+</ul>
+<hr />
+<h2>4. Carte principale des concepts</h2>
+<table>
+<thead>
+<tr>
+  <th>Priorite</th>
+  <th>Bloc</th>
+  <th>Concept</th>
+  <th>Statut actuel</th>
+  <th>Pourquoi c'est important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>Causalite vs correlation</td>
+  <td>Fragile</td>
+  <td>Base de toutes les questions causales</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>Traitement / outcome</td>
+  <td>Fragile</td>
+  <td>Necessaire pour formuler une question causale</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>Confounder</td>
+  <td>Premier passage couvert</td>
+  <td>Question probable du professeur</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>Mediator</td>
+  <td>Premier passage couvert</td>
+  <td>Piege classique dans les DAG</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>Collider</td>
+  <td>Premier passage couvert</td>
+  <td>Piege classique : ne pas controler par erreur</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>DAG</td>
+  <td>Premier passage couvert</td>
+  <td>Lire et expliquer un schema causal</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Causalite</td>
+  <td>Backdoor path</td>
+  <td>Premier passage couvert</td>
+  <td>Comprendre l'ajustement causal</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Detection</td>
+  <td>IoU</td>
+  <td>Fragile</td>
+  <td>Metrique de base en detection d'objets</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Detection</td>
+  <td>Precision / recall</td>
+  <td>A faire</td>
+  <td>Base de l'evaluation du modele</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>Detection</td>
+  <td>mAP</td>
+  <td>A faire</td>
+  <td>Metrique principale pour detecteurs</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>YOLO</td>
+  <td>Prediction de classe et boite</td>
+  <td>Correct</td>
+  <td>Expliquer ce que le modele produit</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>YOLO</td>
+  <td>Confidence score</td>
+  <td>Fragile</td>
+  <td>Comprendre les detections retenues</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>YOLO</td>
+  <td>NMS</td>
+  <td>A faire</td>
+  <td>Comprendre le filtrage des detections</td>
+</tr>
+<tr>
+  <td>0</td>
+  <td>YOLO-OBB</td>
+  <td>Boite orientee vs horizontale</td>
+  <td>Correct</td>
+  <td>Justifie le choix YOLO-OBB</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>ML general</td>
+  <td>Train / validation / test</td>
+  <td>Correct</td>
+  <td>Eviter fuite et evaluation trompeuse</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>ML general</td>
+  <td>Overfitting / underfitting</td>
+  <td>Fragile</td>
+  <td>Expliquer generalisation</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>ML general</td>
+  <td>Fonction de perte</td>
+  <td>Fragile</td>
+  <td>Comprendre apprentissage modele</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>ML general</td>
+  <td>Descente de gradient</td>
+  <td>Correct</td>
+  <td>Relier au mini-exemple du notebook</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Deep learning</td>
+  <td>Reseau de neurones</td>
+  <td>Fragile</td>
+  <td>Base de YOLO</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Deep learning</td>
+  <td>CNN / convolution</td>
+  <td>A faire</td>
+  <td>Base de vision par ordinateur</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>YOLO</td>
+  <td>Backbone</td>
+  <td>Correct</td>
+  <td>Architecture YOLO</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>YOLO</td>
+  <td>Neck</td>
+  <td>Fragile</td>
+  <td>Detection multi-echelle</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>YOLO</td>
+  <td>Head</td>
+  <td>Fragile</td>
+  <td>Sorties du modele</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Donnees</td>
+  <td>Desequilibre des classes</td>
+  <td>Correct</td>
+  <td>DOTA est desequilibre</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Donnees</td>
+  <td>Objets difficiles</td>
+  <td>Correct</td>
+  <td>Analyse DOTA et erreurs futures</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Donnees</td>
+  <td>Tuilage</td>
+  <td>Fragile</td>
+  <td>Necessaire pour grandes images</td>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Methodologie</td>
+  <td>Data leakage</td>
+  <td>Correct</td>
+  <td>Risque majeur avec tuiles</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Causalite appliquee</td>
+  <td>Question causale</td>
+  <td>A faire</td>
+  <td>Partie 4 du projet</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Causalite appliquee</td>
+  <td>Variables d'ajustement</td>
+  <td>A faire</td>
+  <td>Partie 4/5 du projet</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Causalite appliquee</td>
+  <td>Effet causal moyen</td>
+  <td>A faire</td>
+  <td>Estimation causale</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Causalite appliquee</td>
+  <td>Effet heterogene</td>
+  <td>A faire</td>
+  <td>Lien avec arbres causaux</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Causalite appliquee</td>
+  <td>Arbres causaux</td>
+  <td>A faire</td>
+  <td>Partie 5 du projet</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Causalite appliquee</td>
+  <td>Forets causales</td>
+  <td>A faire</td>
+  <td>Partie 5 du projet</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Analyse erreurs</td>
+  <td>Faux positif</td>
+  <td>A faire</td>
+  <td>Evaluer detections incorrectes</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Analyse erreurs</td>
+  <td>Faux negatif</td>
+  <td>A faire</td>
+  <td>Evaluer objets manques</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Analyse erreurs</td>
+  <td>Erreur de localisation</td>
+  <td>A faire</td>
+  <td>Lien direct avec IoU</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>Analyse erreurs</td>
+  <td>Erreur de classification</td>
+  <td>A faire</td>
+  <td>Classe predite incorrecte</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. Concepts deja presents dans le notebook, mais a rendre oraux</h2>
+<p>Ces concepts sont deja dans le notebook ou proches du notebook, mais il faut etre capable de les expliquer sans lire le code.</p>
+<table>
+<thead>
+<tr>
+  <th>Concept</th>
+  <th>Section notebook</th>
+  <th>Risque oral</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Format DOTA</td>
+  <td>Exploration</td>
+  <td>Expliquer les 8 coordonnees</td>
+</tr>
+<tr>
+  <td>Boites orientees</td>
+  <td>Exploration + YOLO-OBB</td>
+  <td>Justifier pourquoi OBB</td>
+</tr>
+<tr>
+  <td>Boites horizontales</td>
+  <td>Pretraitement</td>
+  <td>Expliquer perte d'information</td>
+</tr>
+<tr>
+  <td>Normalisation des coordonnees</td>
+  <td>Pretraitement</td>
+  <td>Expliquer pourquoi entre 0 et 1</td>
+</tr>
+<tr>
+  <td>Encodage des classes</td>
+  <td>Pretraitement</td>
+  <td>Expliquer pourquoi noms -&gt; entiers</td>
+</tr>
+<tr>
+  <td>Objets difficiles</td>
+  <td>Exploration</td>
+  <td>Expliquer impact sur performance</td>
+</tr>
+<tr>
+  <td>Desequilibre de classes</td>
+  <td>Exploration</td>
+  <td>Expliquer pourquoi performance globale peut tromper</td>
+</tr>
+<tr>
+  <td>Tuilage</td>
+  <td>Mentionne, pas encore implemente</td>
+  <td>Expliquer risque de fuite</td>
+</tr>
+<tr>
+  <td>YOLO-OBB</td>
+  <td>Section modele</td>
+  <td>Expliquer architecture et sortie</td>
+</tr>
+<tr>
+  <td>Loss / gradient</td>
+  <td>Mini-exemple SGD</td>
+  <td>Relier a entrainement YOLO</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>6. Concepts absents ou trop peu vus</h2>
+<p>Ces concepts doivent etre ajoutes dans l'apprentissage oral avant d'aller trop loin.</p>
+<h3>Detection / evaluation</h3>
+<ul>
+<li>IoU</li>
+<li>seuil IoU</li>
+<li>true positive</li>
+<li>false positive</li>
+<li>false negative</li>
+<li>precision</li>
+<li>recall</li>
+<li>courbe precision-recall</li>
+<li>AP</li>
+<li>mAP</li>
+<li>NMS</li>
+<li>confidence threshold</li>
+</ul>
+<h3>Causalite</h3>
+<ul>
+<li>causalite vs association</li>
+<li>DAG</li>
+<li>traitement</li>
+<li>outcome</li>
+<li>confounder</li>
+<li>mediator</li>
+<li>collider</li>
+<li>backdoor path</li>
+<li>ajustement</li>
+<li>effet causal</li>
+<li>effet causal moyen</li>
+<li>effet heterogene</li>
+<li>variable observee vs non observee</li>
+</ul>
+<h3>Machine learning general</h3>
+<ul>
+<li>apprentissage supervise</li>
+<li>features</li>
+<li>labels</li>
+<li>train / validation / test</li>
+<li>generalisation</li>
+<li>overfitting</li>
+<li>underfitting</li>
+<li>hyperparametres</li>
+<li>batch size</li>
+<li>epoch</li>
+<li>learning rate</li>
+<li>loss</li>
+</ul>
+<h3>Deep learning / vision</h3>
+<ul>
+<li>reseau de neurones</li>
+<li>poids</li>
+<li>convolution</li>
+<li>feature map</li>
+<li>backbone</li>
+<li>neck</li>
+<li>head</li>
+<li>transfert learning</li>
+<li>fine-tuning</li>
+<li>GPU / CUDA</li>
+</ul>
+<h3>Methodologie projet</h3>
+<ul>
+<li>data leakage</li>
+<li>split par image</li>
+<li>split par tuile</li>
+<li>stratification</li>
+<li>baseline</li>
+<li>comparaison de modeles</li>
+<li>reproductibilite</li>
+<li>limites experimentales</li>
+</ul>
+<hr />
+<h2>7. Ordre d'etude recommande</h2>
+<h3>Phase A - Questions que le professeur vient deja de poser</h3>
+<ol>
+<li>IoU</li>
+<li>Precision / recall</li>
+<li>mAP</li>
+<li>DAG simple</li>
+<li>Confounder / mediator / collider</li>
+<li>Exemple <code>smoking</code>, <code>cancer</code>, <code>cancer gene</code></li>
+</ol>
+<p>Objectif : ne plus etre surpris par une question courte.</p>
+<h3>Phase B - Defense du choix YOLO-OBB</h3>
+<ol>
+<li>Detection vs classification</li>
+<li>YOLO en une passe</li>
+<li>Backbone / neck / head</li>
+<li>Confidence score</li>
+<li>NMS</li>
+<li>Boites orientees vs horizontales</li>
+<li>Loss YOLO : classe + boite + confiance + orientation</li>
+</ol>
+<p>Objectif : expliquer l'algorithme sans code.</p>
+<h3>Phase C - Methodologie d'entrainement</h3>
+<ol>
+<li>Train / validation / test</li>
+<li>Overfitting / underfitting</li>
+<li>Epoch / batch size / learning rate</li>
+<li>GPU / CUDA</li>
+<li>Tuilage</li>
+<li>Data leakage</li>
+<li>Baseline vs modele moderne</li>
+</ol>
+<p>Objectif : defendre les choix experimentaux.</p>
+<h3>Phase D - Causalite appliquee au projet</h3>
+<ol>
+<li>Question causale dans DOTA</li>
+<li>Traitement possible : petit objet, forte orientation, densite, classe rare</li>
+<li>Outcome possible : erreur de detection, faux negatif, IoU faible</li>
+<li>Variables d'ajustement</li>
+<li>Arbres causaux</li>
+<li>Forets causales</li>
+<li>Interpretation : prediction vs causalite</li>
+</ol>
+<p>Objectif : preparer les parties 4 et 5 du projet.</p>
+<hr />
+<h2>8. Questions orales probables</h2>
+<h3>Detection / YOLO</h3>
+<ul>
+<li>Qu'est-ce que l'IoU ?</li>
+<li>Pourquoi l'IoU ne suffit pas seule ?</li>
+<li>Quelle est la difference entre precision et recall ?</li>
+<li>C'est quoi la mAP ?</li>
+<li>Pourquoi YOLO plutot qu'un classifieur ?</li>
+<li>Pourquoi YOLO-OBB plutot que YOLO classique ?</li>
+<li>Que fait la NMS ?</li>
+<li>Que represente le confidence score ?</li>
+<li>Qu'est-ce que la loss du modele penalise ?</li>
+<li>Pourquoi les petits objets sont difficiles ?</li>
+</ul>
+<h3>Donnees / methodologie</h3>
+<ul>
+<li>Pourquoi separer train et validation ?</li>
+<li>Qu'est-ce qu'une fuite de donnees ?</li>
+<li>Pourquoi le tuilage peut creer une fuite ?</li>
+<li>Pourquoi les classes desequilibrees posent probleme ?</li>
+<li>Pourquoi exclure les 171 annotations hors image ?</li>
+<li>Pourquoi normaliser les coordonnees ?</li>
+<li>Pourquoi garder les boites orientees ?</li>
+</ul>
+<h3>Causalite</h3>
+<ul>
+<li>Difference entre correlation et causalite ?</li>
+<li>C'est quoi un confounder ?</li>
+<li>C'est quoi un mediator ?</li>
+<li>C'est quoi un collider ?</li>
+<li>Dans le schema smoking/cancer/gene, quel est le probleme causal ?</li>
+<li>Qu'est-ce qu'un traitement ?</li>
+<li>Qu'est-ce qu'un outcome ?</li>
+<li>Quelles variables faut-il ajuster ?</li>
+<li>Pourquoi prediction et causalite ne sont pas la meme chose ?</li>
+</ul>
+<h3>Projet DOTA</h3>
+<ul>
+<li>Quelle est ta question causale future ?</li>
+<li>Quel serait ton traitement ?</li>
+<li>Quel serait ton outcome ?</li>
+<li>Quelles variables d'ajustement envisages-tu ?</li>
+<li>Comment relier les erreurs de YOLO a une analyse causale ?</li>
+</ul>
+<hr />
+<h2>9. Liens directs avec le projet DOTA</h2>
+<table>
+<thead>
+<tr>
+  <th>Concept</th>
+  <th>Lien avec le projet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>IoU</td>
+  <td>Mesurer si une boite predite recouvre bien une boite reelle</td>
+</tr>
+<tr>
+  <td>mAP</td>
+  <td>Evaluer globalement le detecteur</td>
+</tr>
+<tr>
+  <td>Faux negatif</td>
+  <td>Objet present mais non detecte</td>
+</tr>
+<tr>
+  <td>Faux positif</td>
+  <td>Detection d'un objet qui n'existe pas</td>
+</tr>
+<tr>
+  <td>Orientation</td>
+  <td>DOTA contient des objets tournes</td>
+</tr>
+<tr>
+  <td>Petit objet</td>
+  <td>Vehicules et bateaux peuvent etre difficiles</td>
+</tr>
+<tr>
+  <td>Classe rare</td>
+  <td>Certaines classes auront moins d'exemples</td>
+</tr>
+<tr>
+  <td>Tuilage</td>
+  <td>Necessaire pour grandes images</td>
+</tr>
+<tr>
+  <td>Data leakage</td>
+  <td>Tuiles proches ne doivent pas etre dans train et validation</td>
+</tr>
+<tr>
+  <td>Confounder</td>
+  <td>Variable qui influence a la fois le traitement et l'erreur</td>
+</tr>
+<tr>
+  <td>Traitement causal</td>
+  <td>Exemple : objet petit vs grand</td>
+</tr>
+<tr>
+  <td>Outcome causal</td>
+  <td>Exemple : erreur du detecteur</td>
+</tr>
+<tr>
+  <td>Arbres causaux</td>
+  <td>Trouver pour quels objets l'effet est plus fort</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>10. Definition du socle minimal a atteindre</h2>
+<p>Avant de reprendre un gros entrainement, l'objectif est d'atteindre ce niveau :</p>
+<h3>Pour chaque concept priorite 0</h3>
+<p>Je dois pouvoir dire :</p>
+<ol>
+<li>definition simple ;</li>
+<li>exemple hors projet ;</li>
+<li>exemple dans DOTA ;</li>
+<li>piege courant ;</li>
+<li>pourquoi ca compte pour mon projet.</li>
+</ol>
+<h3>Exemple de niveau attendu</h3>
+<p>Pour <code>IoU</code>, je dois savoir :</p>
+<ul>
+<li>definir intersection et union ;</li>
+<li>expliquer pourquoi <code>IoU = 1</code> est parfait ;</li>
+<li>expliquer pourquoi <code>IoU = 0</code> est mauvais ;</li>
+<li>dire que des seuils IoU servent a decider si une detection est correcte ;</li>
+<li>relier ca aux boites YOLO-OBB.</li>
+</ul>
+<p>Pour <code>confounder</code>, je dois savoir :</p>
+<ul>
+<li>dire que c'est une variable qui influence le traitement et l'outcome ;</li>
+<li>donner l'exemple smoking / cancer / gene si pertinent ;</li>
+<li>expliquer pourquoi il faut ajuster ;</li>
+<li>expliquer qu'une mauvaise variable controlee peut biaiser l'analyse.</li>
+</ul>
+<hr />
+<h2>11. Plan d'action concret</h2>
+<h3>Etape 1</h3>
+<p>Etudier et expliquer :</p>
+<ul>
+<li>IoU</li>
+<li>true positive / false positive / false negative</li>
+<li>precision / recall</li>
+<li>mAP</li>
+</ul>
+<h3>Etape 2</h3>
+<p>Etudier et expliquer :</p>
+<ul>
+<li>DAG</li>
+<li>traitement</li>
+<li>outcome</li>
+<li>confounder</li>
+<li>mediator</li>
+<li>collider</li>
+</ul>
+<h3>Etape 3</h3>
+<p>Etudier et expliquer :</p>
+<ul>
+<li>YOLO</li>
+<li>YOLO-OBB</li>
+<li>NMS</li>
+<li>confidence score</li>
+<li>loss</li>
+</ul>
+<h3>Etape 4</h3>
+<p>Etudier et expliquer :</p>
+<ul>
+<li>overfitting</li>
+<li>validation</li>
+<li>data leakage</li>
+<li>tuilage</li>
+<li>baseline</li>
+</ul>
+<h3>Etape 5</h3>
+<p>Formuler pour le projet :</p>
+<ul>
+<li>question causale provisoire ;</li>
+<li>traitement ;</li>
+<li>outcome ;</li>
+<li>variables d'ajustement ;</li>
+<li>variables a ne pas ajuster ;</li>
+<li>methode causale envisagee.</li>
+</ul>
+<hr />
+<h2>12. Regle de travail pour la suite</h2>
+<p>Pour chaque concept etudie, produire une mini-fiche :</p>
+<pre><code class="language-text">Concept :
+Definition simple :
+Intuition :
+Exemple general :
+Lien avec DOTA :
+Ou ca apparait dans notre notebook/pipeline :
+Piege frequent :
+Phrase orale :
+Question probable :
+Reponse courte :
+</code></pre>
+<p>Ces mini-fiches pourront ensuite etre reprises dans :</p>
+<ul>
+<li>le notebook ;</li>
+<li>le rapport ;</li>
+<li>une future presentation ;</li>
+<li>une preparation orale rapide.</li>
+</ul>
+<hr />
+<h2>13. Suivi rapide</h2>
+<p>Objectif : garder une vision claire de l'avancement sans passer trop de temps sur la preparation orale.</p>
+<h3>Blocs a couvrir</h3>
+<table>
+<thead>
+<tr>
+  <th>Bloc</th>
+  <th>Concepts</th>
+  <th>Statut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Evaluation detection</td>
+  <td>IoU, TP/FP/FN, precision, recall, mAP</td>
+  <td>Couvert, a pratiquer</td>
+</tr>
+<tr>
+  <td>YOLO pratique</td>
+  <td>confidence, NMS, loss, OBB</td>
+  <td>Premier passage couvert</td>
+</tr>
+<tr>
+  <td>Causalite de base</td>
+  <td>DAG, traitement, outcome, confounder, mediator, collider</td>
+  <td>Premier passage couvert</td>
+</tr>
+<tr>
+  <td>Methodologie ML</td>
+  <td>overfitting, validation, leakage, baseline</td>
+  <td>A faire</td>
+</tr>
+<tr>
+  <td>Causalite appliquee DOTA</td>
+  <td>traitement, outcome, ajustements, erreurs du detecteur</td>
+  <td>A faire</td>
+</tr>
+</tbody>
+</table>
+<p>Regle : couvrir 2 ou 3 cartes, puis revenir au projet si le bloc est suffisamment clair.</p>
+<hr />
+<h2>14. Cartes orales - Evaluation en detection</h2>
+<h3>Carte 1 - IoU</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Comment sais-tu si une boite predite par YOLO est correcte ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>On utilise l'IoU, pour Intersection over Union. Ca mesure le chevauchement entre la boite predite et la boite reelle. Si les deux boites se superposent parfaitement, l'IoU vaut 1. Si elles ne se touchent pas, l'IoU vaut 0. En detection, on utilise souvent un seuil d'IoU pour decider si une prediction compte comme correcte.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>Intersection = partie commune entre les deux boites.</li>
+<li>Union = surface totale couverte par les deux boites.</li>
+<li>IoU = intersection / union.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Boite predite presque au bon endroit : IoU elevee.</li>
+<li>Bonne classe mais boite loin de l'objet : IoU faible.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>Dans DOTA, on veut savoir si YOLO-OBB localise bien les avions, bateaux, vehicules, etc.</li>
+<li>Comme les objets peuvent etre tournes, l'IoU doit idealement comparer des boites orientees.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>On n'a pas encore calcule l'IoU dans le notebook, parce qu'il faut d'abord entrainer un modele et obtenir des predictions.</li>
+<li>Les labels YOLO-OBB exportes serviront de boites reelles.</li>
+<li>Les futures predictions YOLO-OBB seront comparees a ces boites reelles avec une metrique de type IoU.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Predire la bonne classe ne suffit pas. Si la boite est mauvaise, la detection est mauvaise.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;L'IoU me permet de mesurer la qualite geometrique de la detection, pas seulement la classe predite.&quot;</li>
+</ul>
+<p>Statut : Correct, a pratiquer oralement.</p>
+<hr />
+<h3>Carte 2 - True positive, false positive, false negative</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Quand est-ce qu'une detection est consideree bonne ou mauvaise ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Une detection est un true positive si le modele predit la bonne classe et que la boite recouvre assez bien un objet reel, selon un seuil d'IoU. Un false positive est une detection annoncee par le modele mais qui ne correspond pas a un vrai objet. Un false negative est un objet reel que le modele n'a pas detecte.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>True positive = objet trouve correctement.</li>
+<li>False positive = fausse alerte.</li>
+<li>False negative = objet manque.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>YOLO detecte un avion au bon endroit : true positive.</li>
+<li>YOLO detecte un avion dans une zone vide : false positive.</li>
+<li>Un avion existe dans l'image mais YOLO ne le detecte pas : false negative.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>Les petits objets peuvent augmenter les false negatives.</li>
+<li>Les zones denses peuvent augmenter les false positives.</li>
+<li>Les objets orientes peuvent causer des erreurs de localisation.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>L'exploration a montre des objets petits, des classes desequilibrees et des boites orientees.</li>
+<li>Apres entrainement, on pourra transformer les predictions en categories d'erreurs : objet trouve, objet manque, fausse detection, mauvaise localisation.</li>
+<li>Ces erreurs seront aussi utiles plus tard pour la partie causale du projet.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Une prediction peut etre mauvaise meme si elle &quot;semble proche&quot; : il faut une regle, souvent basee sur l'IoU.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Les erreurs du detecteur ne sont pas toutes du meme type : il peut inventer un objet, manquer un objet, ou mal localiser un objet.&quot;</li>
+</ul>
+<p>Statut : A renforcer.</p>
+<hr />
+<hr />
+<h3>Carte 3 - Precision et recall</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Quelle est la difference entre precision et recall ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>La precision repond a la question : parmi les detections du modele, combien sont correctes ? Le recall repond a la question : parmi les vrais objets presents, combien le modele a-t-il retrouves ? Donc la precision mesure les fausses alertes, tandis que le recall mesure les objets manques.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>Precision elevee = peu de fausses detections.</li>
+<li>Recall eleve = peu d'objets oublies.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Modele tres prudent : peu de detections, precision haute, recall bas.</li>
+<li>Modele trop agressif : beaucoup de detections, recall haut, precision basse.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>Si on veut detecter tous les petits vehicules, il faut un bon recall.</li>
+<li>Si on veut eviter de fausses detections dans des zones complexes, il faut une bonne precision.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>Le notebook a deja montre que certaines classes sont beaucoup plus frequentes que d'autres.</li>
+<li>Une precision globale peut cacher de mauvaises performances sur des classes rares.</li>
+<li>Quand on evaluera YOLO-OBB, il faudra regarder precision et recall, idealement par classe.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Precision et recall sont souvent en tension. Ameliorer l'un peut degrader l'autre.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;La precision me dit si les detections sont fiables; le recall me dit si le modele oublie beaucoup d'objets.&quot;</li>
+</ul>
+<p>Statut : A renforcer.</p>
+<hr />
+<h3>Carte 4 - mAP</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>C'est quoi la mAP et pourquoi on l'utilise en detection ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>La mAP veut dire mean Average Precision. Elle resume la performance d'un detecteur en combinant precision et recall, puis en moyennant le resultat sur les classes. C'est utile parce qu'un detecteur ne produit pas seulement une classe : il produit plusieurs boites avec des scores de confiance.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>Pour une classe, on regarde comment la precision et le recall changent quand on varie le seuil de confiance.</li>
+<li>Cette relation donne une courbe precision-recall.</li>
+<li>L'AP resume cette courbe pour une classe.</li>
+<li>La mAP moyenne les AP sur plusieurs classes.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Si le modele detecte tres bien les <code>plane</code>, AP plane sera elevee.</li>
+<li>S'il detecte mal les <code>bridge</code>, AP bridge sera faible.</li>
+<li>La mAP resume les performances sur toutes les classes.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>DOTA contient 15 classes.</li>
+<li>Certaines classes sont tres frequentes, comme <code>ship</code> ou <code>small-vehicle</code>.</li>
+<li>D'autres sont plus rares.</li>
+<li>La mAP aide a evaluer le detecteur sans regarder seulement une classe dominante.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>Le notebook a deja une section <code>Evaluation prevue du detecteur</code> qui introduit la mAP.</li>
+<li>La vraie mAP sera calculee apres l'entrainement YOLO-OBB, quand on aura des predictions sur la validation.</li>
+<li>Il faudra idealement regarder la mAP globale et les resultats par classe.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Une bonne mAP globale peut cacher une mauvaise performance sur une classe rare ou difficile.</li>
+<li>Il ne faut pas conclure que le modele est bon partout seulement avec une moyenne.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;La mAP donne une evaluation globale du detecteur, mais dans DOTA je devrai aussi regarder les performances par classe, taille et orientation.&quot;</li>
+</ul>
+<p>Statut : A renforcer.</p>
+<hr />
+<h3>Carte 5 - Confidence score</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Que represente le score de confiance dans YOLO ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Le score de confiance indique a quel point le modele est confiant dans une detection. Il sert a classer et filtrer les predictions. Une detection avec une confiance tres faible peut etre ignoree, tandis qu'une detection tres confiante a plus de chances d'etre gardee.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>Le modele ne dit pas seulement &quot;il y a un avion&quot;.</li>
+<li>Il dit plutot &quot;je pense qu'il y a un avion ici, avec une certaine confiance&quot;.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Detection <code>plane</code> avec confiance 0.92 : prediction assez forte.</li>
+<li>Detection <code>plane</code> avec confiance 0.18 : prediction faible, probablement filtree.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>Les images aeriennes peuvent contenir des zones complexes : batiments, routes, ports, petits objets.</li>
+<li>Le modele peut produire des detections incertaines dans ces zones.</li>
+<li>Le score de confiance aide a decider quelles detections garder.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>Le notebook n'a pas encore de predictions YOLO, donc pas encore de scores de confiance reels.</li>
+<li>Apres entrainement, chaque prediction YOLO-OBB aura un score.</li>
+<li>Ces scores serviront a calculer precision, recall et mAP.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Une confiance elevee ne garantit pas que la boite est bien placee.</li>
+<li>Il faut combiner confiance, classe predite et IoU.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Le score de confiance sert a filtrer les detections, mais il ne remplace pas l'evaluation geometrique avec l'IoU.&quot;</li>
+</ul>
+<p>Statut : A faire pratiquer.</p>
+<hr />
+<h3>Carte 6 - NMS</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Pourquoi YOLO a besoin de NMS ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>YOLO peut predire plusieurs boites pour le meme objet. La NMS, Non-Maximum Suppression, garde la detection la plus confiante et supprime les detections trop proches qui representent probablement le meme objet.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>Un seul avion peut generer plusieurs detections proches.</li>
+<li>Sans filtrage, on compterait plusieurs fois le meme objet.</li>
+<li>La NMS nettoie les predictions.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Trois boites detectent le meme avion.</li>
+<li>Elles ont des confiances 0.91, 0.84 et 0.70.</li>
+<li>La NMS garde souvent celle a 0.91 et supprime les autres si elles se chevauchent trop.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>DOTA peut contenir des zones denses avec beaucoup de vehicules ou bateaux proches.</li>
+<li>La NMS est utile, mais elle doit etre reglee prudemment.</li>
+<li>Si elle est trop agressive, elle peut supprimer des objets reels proches les uns des autres.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>La NMS n'apparaitra vraiment qu'apres les predictions YOLO-OBB.</li>
+<li>Elle fait partie du post-traitement du modele.</li>
+<li>Elle influencera les faux positifs, faux negatifs, precision et recall.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>NMS n'est pas l'entrainement du modele; c'est une etape apres prediction.</li>
+<li>Elle ne corrige pas un modele mauvais, elle filtre seulement les detections candidates.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;La NMS evite de compter plusieurs fois le meme objet, mais dans les zones denses elle peut aussi supprimer des objets proches si elle est trop stricte.&quot;</li>
+</ul>
+<p>Statut : A faire pratiquer.</p>
+<hr />
+<h3>Carte 7 - Loss YOLO</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Qu'est-ce que YOLO apprend pendant l'entrainement ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>YOLO apprend en minimisant une loss, c'est-a-dire une mesure d'erreur entre ses predictions et les annotations. Cette erreur penalise surtout trois choses : une mauvaise localisation de la boite, une mauvaise classe et une mauvaise confiance. En YOLO-OBB, la localisation doit aussi respecter l'orientation de l'objet.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>La loss est le signal qui dit au modele dans quelle direction corriger ses poids.</li>
+<li>Plus la prediction est loin de l'annotation, plus la penalite est forte.</li>
+<li>Pendant l'entrainement, le modele fait beaucoup de petites corrections.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Si un avion est annote a gauche de l'image mais que YOLO le predit trop a droite, la partie localisation de la loss augmente.</li>
+<li>Si la boite est bonne mais la classe predite est <code>ship</code> au lieu de <code>plane</code>, la partie classification augmente.</li>
+<li>Si le modele est tres confiant dans une mauvaise detection, l'erreur est plus grave.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>Dans DOTA, les objets sont souvent petits, denses et orientes.</li>
+<li>La loss doit donc aider le modele a apprendre des boites precises, pas seulement des classes.</li>
+<li>Pour YOLO-OBB, une boite mal orientee peut etre penalisee meme si le centre est proche de l'objet.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>Le notebook prepare les labels YOLO-OBB qui serviront de verite terrain pendant l'entrainement.</li>
+<li>La cellule d'entrainement est preparee mais desactivee par defaut avec <code>RUN_YOLO_OBB_TRAINING = False</code>.</li>
+<li>Quand l'entrainement sera lance, Ultralytics affichera des pertes comme la loss de boite et la loss de classe.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>La loss n'est pas la meme chose que la mAP.</li>
+<li>La loss sert a entrainer le modele; la mAP sert a evaluer sa qualite sur validation.</li>
+<li>Une loss qui baisse est bon signe, mais il faut verifier les metriques de validation.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;La loss est le signal d'apprentissage : elle penalise les erreurs de boite, de classe et de confiance, puis le modele ajuste ses poids pour reduire cette erreur.&quot;</li>
+</ul>
+<p>Statut : A renforcer.</p>
+<hr />
+<h3>Carte 8 - YOLO classique vs YOLO-OBB</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Pourquoi utiliser YOLO-OBB au lieu d'un YOLO classique ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Un YOLO classique predit des boites horizontales, alignees avec les axes de l'image. YOLO-OBB predit des boites orientees, donc des boites qui peuvent tourner avec l'objet. Dans DOTA, c'est important parce que les avions, bateaux, ponts et vehicules peuvent etre dans n'importe quelle orientation.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>Boite horizontale = rectangle droit, meme si l'objet est diagonal.</li>
+<li>Boite orientee = rectangle qui suit mieux la direction de l'objet.</li>
+<li>Moins de fond inutile dans la boite signifie une localisation plus precise.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li>Un avion diagonal dans une image satellite.</li>
+<li>Avec une boite horizontale, la boite englobe l'avion plus beaucoup de fond.</li>
+<li>Avec une boite orientee, la boite suit l'avion et represente mieux sa vraie forme.</li>
+</ul>
+<p>Lien avec DOTA :</p>
+<ul>
+<li>DOTA fournit directement des annotations avec 4 coins, donc le dataset est naturellement compatible avec les boites orientees.</li>
+<li>Notre exploration a montre que l'orientation mediane est loin de 0 degre.</li>
+<li>Cela justifie de garder les OBB comme representation principale.</li>
+</ul>
+<p>Ou ca apparait dans notre notebook/pipeline :</p>
+<ul>
+<li>Le notebook exporte les labels YOLO-OBB au format <code>class_index x1 y1 x2 y2 x3 y3 x4 y4</code>.</li>
+<li>On garde aussi des boites horizontales derivees pour une baseline simple ou pour analyser certaines erreurs.</li>
+<li>La section YOLO explique deja pourquoi YOLO-OBB est plus coherent avec DOTA.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>YOLO-OBB n'est pas automatiquement meilleur dans tous les cas.</li>
+<li>Il est plus adapte a DOTA, mais il demande des annotations correctes, un format exact et une evaluation compatible avec les boites orientees.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;YOLO classique localise avec des rectangles horizontaux; YOLO-OBB localise avec des rectangles orientes, ce qui correspond beaucoup mieux aux objets de DOTA.&quot;</li>
+</ul>
+<p>Statut : A renforcer.</p>
+<hr />
+<h2>15. Cartes orales - Causalite de base et application DOTA</h2>
+<h3>Carte 9 - DAG</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>A quoi sert un DAG en causalite ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Un DAG est un graphe oriente sans cycle qui represente mes hypotheses sur les relations causales. Les fleches indiquent la direction supposee des causes. Il m'aide a identifier les chemins de confusion, choisir les variables d'ajustement et eviter de controler sur un mediator ou un collider.</li>
+</ul>
+<p>Mini-exemple :</p>
+<ul>
+<li><code>classe -&gt; tres petit</code></li>
+<li><code>classe -&gt; detection</code></li>
+<li><code>tres petit -&gt; detection</code></li>
+</ul>
+<p>Lien DOTA :</p>
+<ul>
+<li>La classe peut influencer la taille typique et la facilite de detection. Le DAG montre pourquoi la classe doit etre consideree avant d'interpreter la difference petits/grands.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Un DAG n'est pas appris automatiquement par les correlations. Il formalise des hypotheses qui doivent etre defendues.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Le DAG rend mes hypotheses visibles et me dit quels chemins non causaux je dois bloquer.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert, a redessiner sans support.</p>
+<hr />
+<h3>Carte 10 - Traitement, outcome et estimand</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Quelle est exactement ta question causale ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Mon traitement vaut 1 si l'objet appartient au premier quartile de taille relative calcule sur train. Mon outcome vaut 1 si le modele produit une detection de meme classe, de confiance au moins 0.25 et d'IoU orientee au moins 0.50. J'estime l'effet moyen sur les objets uniques de validation.</li>
+</ul>
+<p>Lien DOTA :</p>
+<ul>
+<li>Le seuil est defini avec train pour ne pas le choisir apres avoir vu les outcomes validation.</li>
+<li>Une seule instance est gardee par objet original pour eviter de surponderer les objets dupliques par la grille.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>&quot;Petit&quot; est une condition observationnelle. Plusieurs interventions differentes pourraient rendre un objet petit.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Je definis D, Y et la population avant l'estimation, sinon le mot effet reste ambigu.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert.</p>
+<hr />
+<h3>Carte 11 - Confounder</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Qu'est-ce qu'un confounder et quel est ton exemple dans DOTA ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Un confounder est une cause commune du traitement et de l'outcome. Dans DOTA, la classe est un exemple : certaines classes sont typiquement plus petites et la classe influence aussi la facilite de detection. Sans ajuster sur elle, la comparaison petits/grands melange taille et composition des classes.</li>
+</ul>
+<p>Schema :</p>
+<ul>
+<li><code>tres petit &lt;- classe -&gt; detection correcte</code></li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Une variable associee aux deux n'est pas automatiquement un confounder. Elle doit preceder causalement les deux dans le DAG.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;J'ajuste sur la classe pour bloquer un chemin arriere, pas parce qu'elle est seulement correlee.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert.</p>
+<hr />
+<h3>Carte 12 - Mediator</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Pourquoi ne faut-il pas toujours ajuster sur toutes les variables disponibles ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Un mediator est cause par le traitement et transmet une partie de son effet vers l'outcome. Si je veux l'effet total, l'ajuster bloquerait precisement une partie de l'effet recherche. Par exemple, la petite taille peut reduire la qualite des features, qui reduit ensuite la detection.</li>
+</ul>
+<p>Schema :</p>
+<ul>
+<li><code>tres petit -&gt; qualite des features -&gt; detection</code></li>
+</ul>
+<p>Lien DOTA :</p>
+<ul>
+<li>Le score de confiance et les features internes sont produits apres le traitement, donc ne sont pas des ajustements principaux.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Ajuster sur un mediator n'est pas toujours faux, mais cela change la question vers un effet direct.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Plus de variables n'est pas toujours mieux : une variable post-traitement peut retirer l'effet que je cherche.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert.</p>
+<hr />
+<h3>Carte 13 - Collider</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Qu'est-ce qu'un collider et pourquoi est-ce un piege ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Un collider est une consequence commune de deux variables. Sans conditionnement, le chemin est ferme. Si je conditionne sur le collider, je peux creer une association artificielle entre ses causes. Par exemple, petite taille et scene complexe peuvent toutes deux influencer le fait qu'une tuile soit retenue.</li>
+</ul>
+<p>Schema :</p>
+<ul>
+<li><code>tres petit -&gt; tuile selectionnee &lt;- scene complexe</code></li>
+</ul>
+<p>Lien DOTA :</p>
+<ul>
+<li>Le rejet des fragments ambigus peut selectionner certaines positions ou tailles. Cette limite doit etre declaree.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Un collider est l'inverse logique d'un confounder pour l'ajustement : le controler peut ouvrir un biais.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Je ne controle pas une variable seulement parce qu'elle est disponible ; je regarde sa place dans le DAG.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert.</p>
+<hr />
+<h3>Carte 14 - Backdoor path et ajustement</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Comment choisis-tu les variables d'ajustement ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>Je cherche les chemins entre traitement et outcome qui commencent par une fleche entrant dans le traitement. Je choisis un ensemble de variables pre-traitement qui bloque ces backdoors, sans bloquer les mediateurs ni ouvrir les colliders.</li>
+</ul>
+<p>Ensemble principal DOTA :</p>
+<ul>
+<li>classe ;</li>
+<li>orientation ;</li>
+<li>ratio de forme ;</li>
+<li>densite ;</li>
+<li>source et GSD ;</li>
+<li>position du centre dans la tuile.</li>
+</ul>
+<p>Variables evitees :</p>
+<ul>
+<li>aire exacte, car elle definit D ;</li>
+<li>fraction conservee, car elle releve de la selection par tuilage et peut etre
+une variable post-traitement ;</li>
+<li>confiance et IoU, car elles sont post-traitement ou outcome.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;Mon ensemble d'ajustement vient du DAG et de la chronologie causale, pas d'une selection automatique de toutes les colonnes.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert.</p>
+<hr />
+<h3>Carte 15 - AIPW et cross-fitting</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Pourquoi utiliser AIPW plutot qu'une simple difference de moyennes ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>La difference brute peut etre confondue. AIPW combine un modele de l'outcome et un score de propension, puis corrige les predictions avec des residus ponderes. Le cross-fitting produit ces predictions sur des folds non utilises pour entrainer les modeles nuisances, groupes par image source.</li>
+</ul>
+<p>Intuition :</p>
+<ul>
+<li>g-computation predit les deux mondes ;</li>
+<li>propension mesure le mecanisme de traitement observe ;</li>
+<li>la correction residuelle rapproche l'estimation des outcomes observes.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Doublement robuste ne signifie pas robuste aux confounders non observes, a la mauvaise positivite ou a un traitement mal defini.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;AIPW combine deux modeles et une correction hors fold, mais mes hypotheses causales restent indispensables.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert, formule a revoir.</p>
+<hr />
+<h3>Carte 16 - Arbre causal et effet heterogene</h3>
+<p>Question probable du prof :</p>
+<ul>
+<li>Pourquoi un arbre causal si tu as deja un effet moyen ?</li>
+</ul>
+<p>Reponse en 20 secondes :</p>
+<ul>
+<li>L'effet moyen peut cacher des sous-groupes. Un arbre causal cherche des divisions ou l'effet estime differe, par exemple selon la classe, l'orientation ou la densite. Dans mon pipeline, une moitie des images choisit les divisions et l'autre estime les effets des feuilles pour limiter le biais.</li>
+</ul>
+<p>Lien DOTA :</p>
+<ul>
+<li>Une penalite de petite taille peut etre plus forte dans une scene dense ou pour certaines classes.</li>
+</ul>
+<p>Piege :</p>
+<ul>
+<li>Une feuille extreme avec peu d'images peut etre du bruit. L'arbre est exploratoire et demande des intervalles et une validation externe.</li>
+</ul>
+<p>Phrase orale utile :</p>
+<ul>
+<li>&quot;L'arbre ne remplace pas l'ATE ; il explore ou l'effet peut etre different et avec quelle incertitude.&quot;</li>
+</ul>
+<p>Statut : Premier passage couvert.</p>
+<hr />
+</section></main><div class="toolbar"><button onclick="toggleCorrections()">Afficher/masquer le corrige</button></div><script>
+    function toggleCorrections(){
+      const target=document.getElementById('doc-07-corrige');
+      if(!target) return;
+      const hidden=target.style.display==='none';
+      target.style.display=hidden?'block':'none';
+      if(hidden) target.scrollIntoView({behavior:'smooth'});
+    }
+    </script></body></html>

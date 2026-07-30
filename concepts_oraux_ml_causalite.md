@@ -10,7 +10,7 @@ Ce fichier n'est pas encore un cours complet. Il sert de carte de travail :
 - niveau de priorite ;
 - statut de maitrise.
 
-Derniere mise a jour : 2026-07-09
+Derniere mise a jour : 2026-07-29
 
 ---
 
@@ -62,11 +62,11 @@ Concepts qui deviendront centraux dans les parties causalite et interpretation.
 |---|---|---|---|---|
 | 0 | Causalite | Causalite vs correlation | Fragile | Base de toutes les questions causales |
 | 0 | Causalite | Traitement / outcome | Fragile | Necessaire pour formuler une question causale |
-| 0 | Causalite | Confounder | A faire | Question probable du professeur |
-| 0 | Causalite | Mediator | A faire | Piege classique dans les DAG |
-| 0 | Causalite | Collider | A faire | Piege classique : ne pas controler par erreur |
-| 0 | Causalite | DAG | Fragile | Lire et expliquer un schema causal |
-| 0 | Causalite | Backdoor path | A faire | Comprendre l'ajustement causal |
+| 0 | Causalite | Confounder | Premier passage couvert | Question probable du professeur |
+| 0 | Causalite | Mediator | Premier passage couvert | Piege classique dans les DAG |
+| 0 | Causalite | Collider | Premier passage couvert | Piege classique : ne pas controler par erreur |
+| 0 | Causalite | DAG | Premier passage couvert | Lire et expliquer un schema causal |
+| 0 | Causalite | Backdoor path | Premier passage couvert | Comprendre l'ajustement causal |
 | 0 | Detection | IoU | Fragile | Metrique de base en detection d'objets |
 | 0 | Detection | Precision / recall | A faire | Base de l'evaluation du modele |
 | 0 | Detection | mAP | A faire | Metrique principale pour detecteurs |
@@ -437,7 +437,7 @@ Objectif : garder une vision claire de l'avancement sans passer trop de temps su
 |---|---|---|
 | Evaluation detection | IoU, TP/FP/FN, precision, recall, mAP | Couvert, a pratiquer |
 | YOLO pratique | confidence, NMS, loss, OBB | Premier passage couvert |
-| Causalite de base | DAG, traitement, outcome, confounder, mediator, collider | A faire |
+| Causalite de base | DAG, traitement, outcome, confounder, mediator, collider | Premier passage couvert |
 | Methodologie ML | overfitting, validation, leakage, baseline | A faire |
 | Causalite appliquee DOTA | traitement, outcome, ajustements, erreurs du detecteur | A faire |
 
@@ -534,6 +534,8 @@ Phrase orale utile :
 - "Les erreurs du detecteur ne sont pas toutes du meme type : il peut inventer un objet, manquer un objet, ou mal localiser un objet."
 
 Statut : A renforcer.
+
+---
 
 ---
 
@@ -813,3 +815,240 @@ Phrase orale utile :
 - "YOLO classique localise avec des rectangles horizontaux; YOLO-OBB localise avec des rectangles orientes, ce qui correspond beaucoup mieux aux objets de DOTA."
 
 Statut : A renforcer.
+
+---
+
+## 15. Cartes orales - Causalite de base et application DOTA
+
+### Carte 9 - DAG
+
+Question probable du prof :
+
+- A quoi sert un DAG en causalite ?
+
+Reponse en 20 secondes :
+
+- Un DAG est un graphe oriente sans cycle qui represente mes hypotheses sur les relations causales. Les fleches indiquent la direction supposee des causes. Il m'aide a identifier les chemins de confusion, choisir les variables d'ajustement et eviter de controler sur un mediator ou un collider.
+
+Mini-exemple :
+
+- `classe -> tres petit`
+- `classe -> detection`
+- `tres petit -> detection`
+
+Lien DOTA :
+
+- La classe peut influencer la taille typique et la facilite de detection. Le DAG montre pourquoi la classe doit etre consideree avant d'interpreter la difference petits/grands.
+
+Piege :
+
+- Un DAG n'est pas appris automatiquement par les correlations. Il formalise des hypotheses qui doivent etre defendues.
+
+Phrase orale utile :
+
+- "Le DAG rend mes hypotheses visibles et me dit quels chemins non causaux je dois bloquer."
+
+Statut : Premier passage couvert, a redessiner sans support.
+
+---
+
+### Carte 10 - Traitement, outcome et estimand
+
+Question probable du prof :
+
+- Quelle est exactement ta question causale ?
+
+Reponse en 20 secondes :
+
+- Mon traitement vaut 1 si l'objet appartient au premier quartile de taille relative calcule sur train. Mon outcome vaut 1 si le modele produit une detection de meme classe, de confiance au moins 0.25 et d'IoU orientee au moins 0.50. J'estime l'effet moyen sur les objets uniques de validation.
+
+Lien DOTA :
+
+- Le seuil est defini avec train pour ne pas le choisir apres avoir vu les outcomes validation.
+- Une seule instance est gardee par objet original pour eviter de surponderer les objets dupliques par la grille.
+
+Piege :
+
+- "Petit" est une condition observationnelle. Plusieurs interventions differentes pourraient rendre un objet petit.
+
+Phrase orale utile :
+
+- "Je definis D, Y et la population avant l'estimation, sinon le mot effet reste ambigu."
+
+Statut : Premier passage couvert.
+
+---
+
+### Carte 11 - Confounder
+
+Question probable du prof :
+
+- Qu'est-ce qu'un confounder et quel est ton exemple dans DOTA ?
+
+Reponse en 20 secondes :
+
+- Un confounder est une cause commune du traitement et de l'outcome. Dans DOTA, la classe est un exemple : certaines classes sont typiquement plus petites et la classe influence aussi la facilite de detection. Sans ajuster sur elle, la comparaison petits/grands melange taille et composition des classes.
+
+Schema :
+
+- `tres petit <- classe -> detection correcte`
+
+Piege :
+
+- Une variable associee aux deux n'est pas automatiquement un confounder. Elle doit preceder causalement les deux dans le DAG.
+
+Phrase orale utile :
+
+- "J'ajuste sur la classe pour bloquer un chemin arriere, pas parce qu'elle est seulement correlee."
+
+Statut : Premier passage couvert.
+
+---
+
+### Carte 12 - Mediator
+
+Question probable du prof :
+
+- Pourquoi ne faut-il pas toujours ajuster sur toutes les variables disponibles ?
+
+Reponse en 20 secondes :
+
+- Un mediator est cause par le traitement et transmet une partie de son effet vers l'outcome. Si je veux l'effet total, l'ajuster bloquerait precisement une partie de l'effet recherche. Par exemple, la petite taille peut reduire la qualite des features, qui reduit ensuite la detection.
+
+Schema :
+
+- `tres petit -> qualite des features -> detection`
+
+Lien DOTA :
+
+- Le score de confiance et les features internes sont produits apres le traitement, donc ne sont pas des ajustements principaux.
+
+Piege :
+
+- Ajuster sur un mediator n'est pas toujours faux, mais cela change la question vers un effet direct.
+
+Phrase orale utile :
+
+- "Plus de variables n'est pas toujours mieux : une variable post-traitement peut retirer l'effet que je cherche."
+
+Statut : Premier passage couvert.
+
+---
+
+### Carte 13 - Collider
+
+Question probable du prof :
+
+- Qu'est-ce qu'un collider et pourquoi est-ce un piege ?
+
+Reponse en 20 secondes :
+
+- Un collider est une consequence commune de deux variables. Sans conditionnement, le chemin est ferme. Si je conditionne sur le collider, je peux creer une association artificielle entre ses causes. Par exemple, petite taille et scene complexe peuvent toutes deux influencer le fait qu'une tuile soit retenue.
+
+Schema :
+
+- `tres petit -> tuile selectionnee <- scene complexe`
+
+Lien DOTA :
+
+- Le rejet des fragments ambigus peut selectionner certaines positions ou tailles. Cette limite doit etre declaree.
+
+Piege :
+
+- Un collider est l'inverse logique d'un confounder pour l'ajustement : le controler peut ouvrir un biais.
+
+Phrase orale utile :
+
+- "Je ne controle pas une variable seulement parce qu'elle est disponible ; je regarde sa place dans le DAG."
+
+Statut : Premier passage couvert.
+
+---
+
+### Carte 14 - Backdoor path et ajustement
+
+Question probable du prof :
+
+- Comment choisis-tu les variables d'ajustement ?
+
+Reponse en 20 secondes :
+
+- Je cherche les chemins entre traitement et outcome qui commencent par une fleche entrant dans le traitement. Je choisis un ensemble de variables pre-traitement qui bloque ces backdoors, sans bloquer les mediateurs ni ouvrir les colliders.
+
+Ensemble principal DOTA :
+
+- classe ;
+- orientation ;
+- ratio de forme ;
+- densite ;
+- source et GSD ;
+- position du centre dans la tuile.
+
+Variables evitees :
+
+- aire exacte, car elle definit D ;
+- fraction conservee, car elle releve de la selection par tuilage et peut etre
+  une variable post-traitement ;
+- confiance et IoU, car elles sont post-traitement ou outcome.
+
+Phrase orale utile :
+
+- "Mon ensemble d'ajustement vient du DAG et de la chronologie causale, pas d'une selection automatique de toutes les colonnes."
+
+Statut : Premier passage couvert.
+
+---
+
+### Carte 15 - AIPW et cross-fitting
+
+Question probable du prof :
+
+- Pourquoi utiliser AIPW plutot qu'une simple difference de moyennes ?
+
+Reponse en 20 secondes :
+
+- La difference brute peut etre confondue. AIPW combine un modele de l'outcome et un score de propension, puis corrige les predictions avec des residus ponderes. Le cross-fitting produit ces predictions sur des folds non utilises pour entrainer les modeles nuisances, groupes par image source.
+
+Intuition :
+
+- g-computation predit les deux mondes ;
+- propension mesure le mecanisme de traitement observe ;
+- la correction residuelle rapproche l'estimation des outcomes observes.
+
+Piege :
+
+- Doublement robuste ne signifie pas robuste aux confounders non observes, a la mauvaise positivite ou a un traitement mal defini.
+
+Phrase orale utile :
+
+- "AIPW combine deux modeles et une correction hors fold, mais mes hypotheses causales restent indispensables."
+
+Statut : Premier passage couvert, formule a revoir.
+
+---
+
+### Carte 16 - Arbre causal et effet heterogene
+
+Question probable du prof :
+
+- Pourquoi un arbre causal si tu as deja un effet moyen ?
+
+Reponse en 20 secondes :
+
+- L'effet moyen peut cacher des sous-groupes. Un arbre causal cherche des divisions ou l'effet estime differe, par exemple selon la classe, l'orientation ou la densite. Dans mon pipeline, une moitie des images choisit les divisions et l'autre estime les effets des feuilles pour limiter le biais.
+
+Lien DOTA :
+
+- Une penalite de petite taille peut etre plus forte dans une scene dense ou pour certaines classes.
+
+Piege :
+
+- Une feuille extreme avec peu d'images peut etre du bruit. L'arbre est exploratoire et demande des intervalles et une validation externe.
+
+Phrase orale utile :
+
+- "L'arbre ne remplace pas l'ATE ; il explore ou l'effet peut etre different et avec quelle incertitude."
+
+Statut : Premier passage couvert.
+
+---

@@ -7,11 +7,17 @@ Testing Images/
 .codex_deps/
 deps/
 deps_local/
+.venv/
+.venv_gpu/
 .ultralytics_config/
 Ultralytics/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Temporary QA and rendered files
+tmp/
+outputs/analysis/validation_runs/
 
 # Python
 __pycache__/
