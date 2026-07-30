@@ -6,20 +6,17 @@ raisonnements essentiels et reconnaitre les limites methodologiques.
 
 ## Avant de couper Internet
 
-1. Ouvrir ce fichier et verifier que les liens fonctionnent.
-2. Ouvrir `projet_dota.ipynb` avec le noyau `Python (DOTA GPU)`.
-3. Executer :
+1. Faire un `git pull` sur l'ordinateur emporte pendant le vol.
+2. Ouvrir `output/notebook/projet_dota.html` dans un navigateur.
+3. Ouvrir `output/pdf/guide_etude_vol_dota.pdf`.
+4. Couper temporairement le Wi-Fi et verifier que les figures restent visibles.
+5. Garder tout le dossier du depot sur le disque local.
 
-```powershell
-.\.venv_gpu\Scripts\python.exe scripts\verify_offline_ready.py
-```
-
-4. Garder le dossier du projet sur le disque local.
-5. Brancher le chargeur si un entrainement doit etre relance.
-
-Le modele de base `yolo26n.pt`, l'environnement `.venv_gpu`, les donnees
-preparees et les poids entraines sont deja locaux. Ils sont volontairement
-ignores par Git parce qu'ils sont volumineux.
+Le notebook est pre-execute : son code, ses tableaux, ses graphiques et ses
+resultats sont deja sauvegardes. Pour la lecture, aucun noyau Jupyter, dataset,
+poids YOLO ou environnement Python n'est necessaire. Ne pas utiliser
+`Restart and Run All` sur cet ordinateur, car les donnees et poids volumineux
+sont volontairement ignores par Git.
 
 ## Methode de travail pour chaque bloc
 

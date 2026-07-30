@@ -617,9 +617,9 @@ reproducibility
     ]
     notebook.cells.extend(cells)
     notebook.metadata.kernelspec = {
-        "display_name": "Python (DOTA GPU)",
+        "display_name": "Python 3",
         "language": "python",
-        "name": "dota-gpu",
+        "name": "python3",
     }
     notebook.metadata.language_info = {
         **notebook.metadata.get("language_info", {}),

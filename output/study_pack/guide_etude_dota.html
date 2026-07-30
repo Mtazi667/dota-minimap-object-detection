@@ -39,19 +39,17 @@ tout lire passivement. Le but est de pouvoir expliquer le projet, refaire les
 raisonnements essentiels et reconnaitre les limites methodologiques.</p>
 <h2>Avant de couper Internet</h2>
 <ol>
-<li>Ouvrir ce fichier et verifier que les liens fonctionnent.</li>
-<li>Ouvrir <code>projet_dota.ipynb</code> avec le noyau <code>Python (DOTA GPU)</code>.</li>
-<li>Executer :</li>
+<li>Faire un <code>git pull</code> sur l'ordinateur emporte pendant le vol.</li>
+<li>Ouvrir <code>output/notebook/projet_dota.html</code> dans un navigateur.</li>
+<li>Ouvrir <code>output/pdf/guide_etude_vol_dota.pdf</code>.</li>
+<li>Couper temporairement le Wi-Fi et verifier que les figures restent visibles.</li>
+<li>Garder tout le dossier du depot sur le disque local.</li>
 </ol>
-<pre><code class="language-powershell">.\.venv_gpu\Scripts\python.exe scripts\verify_offline_ready.py
-</code></pre>
-<ol start="4">
-<li>Garder le dossier du projet sur le disque local.</li>
-<li>Brancher le chargeur si un entrainement doit etre relance.</li>
-</ol>
-<p>Le modele de base <code>yolo26n.pt</code>, l'environnement <code>.venv_gpu</code>, les donnees
-preparees et les poids entraines sont deja locaux. Ils sont volontairement
-ignores par Git parce qu'ils sont volumineux.</p>
+<p>Le notebook est pre-execute : son code, ses tableaux, ses graphiques et ses
+resultats sont deja sauvegardes. Pour la lecture, aucun noyau Jupyter, dataset,
+poids YOLO ou environnement Python n'est necessaire. Ne pas utiliser
+<code>Restart and Run All</code> sur cet ordinateur, car les donnees et poids volumineux
+sont volontairement ignores par Git.</p>
 <h2>Methode de travail pour chaque bloc</h2>
 <p>Utiliser toujours le meme cycle :</p>
 <ol>

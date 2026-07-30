@@ -5,6 +5,22 @@ aeriennes. Le pipeline compare YOLO26n avec boites horizontales et YOLO26n-OBB,
 puis estime l'effet de la condition "objet tres petit" sur la probabilite de
 detection correcte.
 
+## Lecture sur un autre ordinateur
+
+Pour lire le projet apres un `git pull`, sans donnees DOTA et sans environnement
+Python, ouvrir directement :
+
+- [`output/notebook/projet_dota.html`](output/notebook/projet_dota.html) :
+  notebook pre-execute, autonome et lisible hors ligne ;
+- [`output/pdf/guide_etude_vol_dota.pdf`](output/pdf/guide_etude_vol_dota.pdf) :
+  parcours d'etude de 8 heures ;
+- [`output/pdf/rapport_final_dota.pdf`](output/pdf/rapport_final_dota.pdf) :
+  rapport final.
+
+Les tableaux, figures et resultats sont deja inclus. Il ne faut pas reexecuter
+le notebook sur l'ordinateur de lecture. Voir
+[`PORTABLE_READING.md`](PORTABLE_READING.md) pour la checklist complete.
+
 ## Livrables
 
 - `projet_dota.ipynb` : notebook principal en francais, organise selon les six
@@ -40,6 +56,10 @@ detection correcte.
   traversant zero lorsque la propension est clippee a 0.02.
 
 ## Demarrage local
+
+Cette section concerne la reproduction complete sur l'ordinateur qui contient
+les donnees, les poids et l'environnement GPU. Elle n'est pas necessaire pour
+la lecture portable.
 
 ```powershell
 .\.venv_gpu\Scripts\python.exe scripts\verify_offline_ready.py
