@@ -80,8 +80,6 @@ Etat connu :
 - Des fichiers auxiliaires peuvent etre crees si cela aide l'organisation, mais le notebook soumis doit rester executable independamment et inclure les fonctions necessaires.
 - Le code doit rester lisible et plausible pour un projet etudiant; les commentaires dans le code doivent surtout aider le lecteur du notebook, tandis que les explications detaillees se feront dans la conversation.
 - Dans le notebook, eviter les accents sur les voyelles pour contourner le probleme d'affichage en `?`; garder simplement la voyelle non accentuee, meme si la grammaire devient moins correcte. Exemple : `frere`, pas `frre`.
-- Preference Git a partir du 2026-07-11 : apres chaque modification de fichier, pousser les changements avec le raccourci `git cpush "message"`. Le message doit resumer la modification, par exemple `git cpush "Updated concepts cards"`.
-
 ## Avancement du notebook
 - 2026-06-09 : `projet_dota.ipynb` a ete initialise avec 11 cellules.
 - 2026-06-10 : ajout d'un bloc d'exploration detaille sur la repartition des classes, la comparaison train/validation, les objets difficiles, les tailles des boites, les tailles des images et une fonction de visualisation des boites orientees.
@@ -117,3 +115,60 @@ Etat connu :
 - 2026-07-11 : ajout dans `projet_dota.ipynb` d'une section `Preparation de la question causale`. Elle distingue prediction et causalite, definit traitement/outcome/variables d'ajustement dans le contexte DOTA, propose trois questions causales candidates et donne un DAG provisoire pour l'effet de la petite taille sur l'erreur du detecteur.
 - Verification du 2026-07-11 : execution complete sans erreur. Variables candidates creees dans `causal_objects` : `small_object` environ 25.2%, `large_object` environ 25.0%, `diagonal_orientation` environ 25.3%. Outcome causal final encore indisponible tant que YOLO-OBB n'a pas produit de predictions/erreurs.
 - Prochaine etape logique : soit creer les cartes orales causalite (DAG, confounder, mediator, collider), soit reprendre le projet technique en preparant les images YOLO et l'environnement CUDA.
+
+## Etat final verifie le 2026-07-29
+- Environnement GPU local valide : Python 3.14.3, torch 2.11.0+cu130, CUDA 13.0 et RTX 4060.
+- Sous-ensemble experimental termine : 180 images train, 60 validation, 912 tuiles train, 245 validation, 15 classes dans les deux splits et zero overlap d'image source.
+- Trois runs termines a 20 epochs : HBB-640, OBB-640 et OBB-1024. Le modele principal est OBB-1024.
+- Validation finale OBB-1024 : precision 0.574, recall 0.290, F1 0.385, mAP50 0.274 et mAP50-95 0.186.
+- Table causale finale : 1 646 objets uniques issus de 53 images. Traitement = premier quartile train de l'aire relative; outcome = meme classe, confiance >= 0.25 et IoU OBB >= 0.50.
+- Ajustement final : classe, orientation, log ratio de forme, densite, source, GSD et position du centre dans la tuile. La fraction conservee est exclue pour eviter un ajustement sur une variable de selection ou post-traitement.
+- AIPW principal : -0.368, IC 95 % bootstrap groupe [-0.530; -0.166]. Les estimations ponctuelles de sensibilite restent negatives; le clipping 0.02 donne un IC qui traverse zero.
+- Arbre causal honnete limite a une division : effet holdout plus negatif pour les tuiles de plus de 16.5 objets, resultat exploratoire avec seulement 12 images dans la feuille dense.
+- `projet_dota.ipynb` contient 95 cellules et les six questions. Verification clean-kernel : 48 cellules code executees, zero erreur, zero execution count manquant et zero voyelle accentuee dans les sources.
+- Livrables finaux : `output/pdf/rapport_final_dota.pdf` (14 pages), `output/pdf/guide_etude_vol_dota.pdf` (66 pages), `output/study_pack/guide_etude_dota.html` et `output/notebook/projet_dota.html`.
+- Pack vol : programme actif de 8 heures, cours detection/causalite, chapitre de resultats reels, exercices, corrige, 60 questions orales et 80 flashcards.
+- Verification hors ligne : `scripts/verify_offline_ready.py` passe integralement, tests `7 passed`, rendu visuel de toutes les pages PDF controle.
+
+## Lecture portable verifiee le 2026-07-30
+- L'etudiant utilisera un autre ordinateur uniquement pour tirer le depot et lire les sorties deja calculees; aucune reexecution du notebook n'est attendue pendant le vol.
+- `projet_dota.ipynb` a ete reexecute integralement avant export : 48 cellules code executees et zero sortie d'erreur.
+- Le noyau enregistre est maintenant le noyau portable `python3` et aucun chemin utilisateur absolu ne reste dans le notebook.
+- `output/notebook/projet_dota.html` est un lecteur autonome : figures integrees, aucune ressource distante active, aucun besoin de Python, Jupyter, DOTA ou poids YOLO.
+- `PORTABLE_READING.md` et `scripts/verify_portable_reader.py` documentent et controlent ce mode lecture.
+
+## Reprise compacte pour la soutenance le 2026-08-05
+- Creation progressive d'un nouveau notebook `projet_dota_soutenance.ipynb` afin de conserver intacte la version complete existante.
+- Style demande : texte court et naturel, niveau etudiant debutant en machine learning, sans accumulation de commentaires ou de methodes.
+- Comparaison predictive retenue : Faster R-CNN avec boites horizontales contre YOLO26n-OBB-1024 avec boites orientees.
+- La causalite reste obligatoire selon le sujet, mais sera presentee avec une estimation ajustee simple et un arbre causal peu profond.
+- Le notebook sera construit une section a la fois. Seul le bloc 0 (introduction, environnement et chemins relatifs) est commence a cette date.
+- Les dossiers DOTA sont actuellement places directement dans la racine du depot : `Training Data`, `Validation Data` et `Testing Images`.
+- 2026-08-05 : ajout de la premiere petite sous-partie de la question 1 dans `projet_dota_soutenance.ipynb` avec le chargement des listes de fichiers, un tableau de comptage et une interpretation courte.
+- Comptage obtenu : 1 411 images et 1 411 annotations train, 458 images et 458 annotations validation, puis 937 images test sans annotations fournies.
+- Verification avec le noyau `dota-gpu` : 3 cellules de code executees, zero erreur, aucun chemin utilisateur absolu et aucune source non ASCII. La suite de la question 1 n'est pas encore ajoutee.
+- 2026-08-05 : ajout de la sous-partie 1.2 dans `projet_dota_soutenance.ipynb`. Une fonction simple charge les coordonnees, la classe et l'indicateur `difficult` de chaque objet DOTA.
+- Le tableau par classe contient 98 990 objets train et 28 853 objets validation. Les 15 classes sont presentes dans les deux ensembles; `ship` et `small-vehicle` dominent nettement.
+- Verification avec le noyau `dota-gpu` : 5 cellules de code executees, zero erreur, aucun chemin utilisateur absolu et aucune source non ASCII. Les tailles, orientations, difficultes et visualisations ne sont pas encore traitees dans ce notebook compact.
+- 2026-08-05 : question 1 terminee dans `projet_dota_soutenance.ipynb`. Ajout des tailles d'images, surfaces et orientations des objets, indicateur `difficult`, deux exemples OBB/HBB, choix des algorithmes et risques methodologiques.
+- Statistiques principales : taille mediane proche de 1 800 x 1 800 pixels; aire mediane de 760 px2 en train et 766 px2 en validation; orientation mediane de 47.175 et 52.275 degres; objets difficiles a 5.55 % et 6.62 %.
+- Comparaison retenue : Faster R-CNN avec boites horizontales contre YOLO26n-OBB-1024 avec boites orientees. L'arbre causal reste reserve a l'analyse ulterieure des erreurs de detection.
+- Verification finale de la question 1 : 22 cellules dont 9 cellules de code executees avec `dota-gpu`, zero erreur, aucun chemin utilisateur absolu, aucune source non ASCII et deux figures controlees visuellement. La prochaine partie est la question 2.
+- 2026-08-05 : question 2 terminee dans `projet_dota_soutenance.ipynb`. Le notebook charge les metadonnees, controle les annotations, recharge le jeu prepare, verifie les formats OBB/HBB et construit une table d'analyse par objet unique.
+- Controle brut : 15 classes connues, zero aire ou HBB invalide, 149 objets train et 22 validation partiellement hors image. Ils sont clippes pendant le tuilage. Les objets `difficult` sont conserves et identifies.
+- Sous-ensemble confirme : 180 images train, 60 validation, 912 tuiles train et 245 validation, 15 classes dans les deux ensembles et zero image source partagee. Tuiles de 1 024 pixels, pas train 824 et pas validation 1 024.
+- Table d'analyse : 6 292 objets uniques, dont 1 646 objets validation issus de 53 images. La colonne `detection_correcte` reste vide jusqu'aux predictions de la question 3.
+- Verification finale de la question 2 : 37 cellules dont 14 cellules de code executees sans erreur avec la RTX 4060; noyau enregistre `dota-gpu`, aucun chemin utilisateur absolu et aucune source non ASCII. La prochaine partie est la question 3.
+- 2026-08-05 : apres avoir choisi le Python generique dans VS Code, le notebook de soutenance a lance `C:\Python314\python.exe` au lieu de l'environnement `.venv_gpu` et la premiere cellule est restee bloquee. Les metadonnees ont ete remises sur `dota-gpu` et l'etat execute restaure : comptes 1 a 14 et zero erreur. Dans VS Code, choisir `Jupyter Kernel > Python (DOTA GPU)`.
+- 2026-08-05 : debut de la question 3 dans `projet_dota_soutenance.ipynb`. Ajout de la formulation predictive, du protocole Faster R-CNN HBB contre YOLO26n-OBB-1024, du chargeur de donnees HBB et de la construction de la baseline.
+- Baseline retenue : Faster R-CNN MobileNetV3-FPN avec transfert COCO, entree interne 640 pixels, batch 2 et 8 epochs prevues. Ce backbone reste assez leger pour les 8 Go de la RTX 4060.
+- Controle Faster R-CNN : 912 tuiles train, 245 validation, 16 sorties avec l'arriere-plan, 18 943 083 parametres entrainables et perte de test finie a 3.2761. Les poids Faster R-CNN ne sont pas encore entraines; les poids YOLO26n-OBB-1024 sont presents.
+- Verification de cette sous-partie : 46 cellules dont 19 cellules de code executees avec `dota-gpu`, comptes 1 a 19, zero erreur, aucun chemin utilisateur absolu et aucune source non ASCII. La prochaine sous-partie est l'entrainement et la sauvegarde de la baseline Faster R-CNN.
+- 2026-08-05 : baseline Faster R-CNN entrainee pendant 8 epochs. Un batch compose seulement de tuiles vides produisait des pertes ROI `NaN`; les 801 tuiles train et 212 validation contenant des objets sont donc utilisees pour la perte. Les tuiles vides restent disponibles pour l'evaluation finale des faux positifs.
+- Entrainement stabilise en precision normale avec SGD, taux initial 0.001, warm-up pendant la premiere epoch, decroissance du taux et controle des gradients. Aucun batch avec objets n'a ete ignore pendant le run final.
+- Meilleur poids Faster R-CNN : epoch 4, perte train 0.4321 et perte validation 0.5151. Les 8 epochs ont pris environ 5.6 minutes. Poids sauvegarde dans `runs/dota_experiment_v1/faster_rcnn_mobilenet_hbb/best_model.pth` et historique dans `training_history.csv`.
+- Verification apres reutilisation des poids : 51 cellules dont 22 cellules de code executees avec `dota-gpu`, comptes 1 a 22, zero erreur, aucun chemin utilisateur absolu et aucune source non ASCII. Les poids Faster R-CNN et YOLO26n-OBB-1024 sont tous les deux presents. La prochaine sous-partie est l'evaluation predictive comparee.
+- 2026-08-05 : question 3 terminee dans `projet_dota_soutenance.ipynb`. Les deux modeles sont charges depuis leurs meilleurs poids puis evalues sur les 245 tuiles de validation, avec un tableau global, une comparaison par classe et deux exemples visuels.
+- Resultats Faster R-CNN HBB : precision 0.308, rappel 0.163, F1 0.213, mAP50 0.142, mAP50-95 0.060 et 17.1 ms par image. Resultats YOLO26n-OBB-1024 : precision 0.572, rappel 0.291, F1 0.386, mAP50 0.272, mAP50-95 0.185 et 7.9 ms par image.
+- YOLO26n-OBB-1024 est conserve comme modele principal. Les predictions Faster R-CNN sont mises en cache dans `runs/dota_experiment_v1/faster_rcnn_mobilenet_hbb/validation_predictions.pt`; les mesures YOLO sont dans `outputs/analysis/yolo_obb_metrics.csv` et `yolo_obb_class_metrics.csv`.
+- Verification finale de la question 3 : 62 cellules dont 29 cellules de code executees avec `dota-gpu`, comptes 1 a 29, zero erreur, aucun chemin utilisateur absolu et aucune source non ASCII. La prochaine partie est la question 4 sur la formulation causale.
