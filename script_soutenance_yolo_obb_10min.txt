@@ -1,146 +1,162 @@
-﻿SCRIPT DE SOUTENANCE — TEXTE COMPLET DE PRÉPARATION
+﻿SCRIPT DE SOUTENANCE — VERSION PARLÉE
 Projet de détection d’objets dans des images aériennes DOTA-v1.0
 Algorithme présenté : YOLO26n-OBB-1024
-Durée totale disponible : 10 minutes
+Durée estimée : environ 12 minutes selon le débit
 
-Ce fichier contient le texte complet servant à comprendre et à préparer le discours.
-Il ne doit pas nécessairement être lu mot pour mot pendant la présentation.
-La fiche orale séparée contient les repères courts à utiliser pendant l’oral.
+Ce texte est volontairement écrit comme un discours et non comme un rapport.
+Le but est de garder les idées et les transitions, puis de les dire naturellement avec ses propres mots.
 
 ============================================================
-INTRODUCTION ET CHOIX DE L’ALGORITHME — ENVIRON 1 MINUTE
+INTRODUCTION ET CHOIX DU MODÈLE — ENVIRON 1 MINUTE 30 À 2 MINUTES
 ============================================================
 
-Bonjour, je vais vous présenter la partie prédictive de mon projet de détection d’objets dans des images aériennes, à partir du jeu de données DOTA-v1.0.
+Bonjour. Alors aujourd’hui, je vais vous présenter une partie de mon projet, qui porte sur la détection d’objets dans des images aériennes.
 
-La difficulté principale est que les objets peuvent être petits, proches les uns des autres et orientés dans n’importe quelle direction. J’ai donc choisi YOLO26n avec des boîtes orientées, dans une configuration à 1 024 pixels.
+J’utilise le jeu de données DOTA-v1.0. Il contient de grandes images aériennes avec plusieurs types d’objets, par exemple des avions, des navires, des véhicules, des ponts ou des terrains de sport. Donc l’objectif, c’est d’avoir un modèle capable de localiser automatiquement ces objets et de reconnaître leur classe.
 
-Une boîte orientée, ou OBB, suit l’angle de l’objet et contient généralement moins d’arrière-plan qu’une boîte horizontale. YOLO effectue la détection en une étape, et la variante nano reste réaliste pour mon matériel. La résolution 1 024 conserve aussi davantage de détails que 640 pixels.
+Pour cette présentation, je vais me concentrer sur le modèle principal que j’ai retenu, qui est YOLO26n-OBB-1024. J’ai aussi utilisé Faster R-CNN avec des boîtes horizontales comme modèle de comparaison, mais YOLO avec les boîtes orientées a donné les meilleurs résultats dans mon expérience.
 
-Enfin, ce choix est confirmé par ma validation : YOLO26n-OBB-1024 dépasse ma baseline Faster R-CNN. Je vais maintenant présenter son fonctionnement en cinq étapes.
+L’intérêt d’une boîte orientée, c’est qu’elle suit l’angle réel de l’objet. Donc, si un avion est incliné, on peut l’entourer beaucoup plus précisément au lieu d’utiliser un grand rectangle horizontal qui contient aussi de l’arrière-plan.
 
-
-------------------------------------------------------------
-DIAPOSITIVE 1 — FONCTIONNEMENT DE YOLO-OBB EN CINQ ÉTAPES
-Durée visée : environ 3 minutes
-------------------------------------------------------------
-
-À gauche, l’image montre une tuile de validation et les prédictions du modèle. Les rectangles bleus suivent l’orientation des avions au lieu de rester horizontaux. Cette image illustre directement l’intérêt des OBB dans DOTA.
-
-À droite, j’ai résumé l’algorithme en cinq étapes.
-
-La première étape est l’entrée. Les grandes images aériennes sont découpées en tuiles plus faciles à traiter. Ici, le modèle reçoit une tuile avec une taille d’inférence de 1 024 par 1 024 pixels. Cette résolution demande plus de calcul que 640, mais elle préserve mieux les petits objets.
-
-La deuxième étape est le backbone, qui est un réseau de neurones convolutif. Ses filtres sont appris pendant l’entraînement. Les premières couches détectent des motifs simples, comme des bords ou des textures, puis les couches suivantes les combinent en caractéristiques plus complexes. Le backbone transforme donc les pixels en cartes de caractéristiques utiles.
-
-La troisième étape est le neck multi-échelle. Dans DOTA, un petit véhicule et un grand terrain de sport ont des tailles très différentes. Le neck combine des cartes à plusieurs résolutions : les cartes fines conservent les petits détails et les cartes plus profondes apportent davantage de contexte.
-
-La quatrième étape est la tête OBB. À partir des caractéristiques précédentes, elle produit les prédictions finales. Pour chaque candidat, le modèle estime une classe, un score de confiance et une boîte orientée décrivant sa position, ses dimensions et son angle.
-
-La cinquième étape est le post-traitement. Le seuil de confiance élimine d’abord les prédictions trop incertaines. Il peut ensuite rester plusieurs boîtes pour le même objet. La suppression des non-maxima, ou NMS, conserve en priorité la boîte la plus confiante et retire les prédictions très redondantes. Avec des OBB, cette comparaison doit tenir compte de l’orientation.
-
-Ces cinq étapes décrivent l’inférence, donc l’utilisation de poids déjà appris. Pendant l’entraînement, les prédictions sont comparées aux annotations afin d’ajuster les paramètres du réseau. Aujourd’hui, je ne relance pas l’entraînement : je charge le meilleur poids sauvegardé.
-
-Pour évaluer la localisation et comparer les superpositions, j’utilise maintenant une mesure importante : l’Intersection over Union, ou IoU.
+J’ai gardé la version nano parce qu’elle reste réaliste pour mon matériel, et une résolution de 1 024 pixels parce qu’elle a donné un meilleur résultat que 640 parmi les configurations testées. Je vais maintenant expliquer le fonctionnement du modèle en cinq étapes.
 
 
 ------------------------------------------------------------
-DIAPOSITIVE 2 — FORMULE DE L’IOU ORIENTÉE
-Durée visée : environ 3 minutes
+DIAPOSITIVE 1 — FONCTIONNEMENT DE YOLO EN CINQ ÉTAPES
+Durée visée : environ 3 minutes 30 à 4 minutes
 ------------------------------------------------------------
 
-À gauche, les deux boîtes inclinées se chevauchent. La zone plus foncée représente leur intersection, c’est-à-dire leur surface commune.
+Alors, à gauche, on a un exemple d’image qui montre une tuile de validation avec les prédictions que le modèle a faites. On a des rectangles bleus qui suivent les orientations des avions au lieu de rester complètement horizontaux. Donc c’est un très bon exemple pour illustrer l’intérêt des boîtes orientées dans notre projet.
 
-La formule de l’IoU est l’aire de cette intersection divisée par l’aire de l’union. L’union est toute la surface couverte par au moins une boîte. Pour la calculer, on additionne l’aire de A et l’aire de B, puis on soustrait l’intersection, puisqu’elle a été comptée deux fois.
+Ensuite, à droite, j’ai résumé les cinq étapes que YOLO suit.
 
-L’IoU est comprise entre zéro et un. Zéro signifie que les boîtes ne se chevauchent pas. Un signifie qu’elles sont parfaitement superposées. Plus l’IoU est élevée, plus leur localisation est similaire.
+Donc on a la première, qui est l’étape d’entrée. On part de grandes images aériennes qui ont une très haute résolution. Si on essayait de les envoyer directement au modèle, la tâche serait beaucoup plus lourde et plus compliquée. Donc ces grandes images sont découpées en tuiles, ce qui les rend beaucoup plus simples à traiter.
 
-L’exemple utilise des nombres simples. Si chaque boîte possède une aire de 100 et que leur intersection vaut 60, l’union vaut 100 plus 100 moins 60, donc 140. L’IoU vaut alors 60 divisé par 140, soit environ 0,43.
+La taille qu’on a choisie pour les tuiles, c’est 1 024 par 1 024 pixels. Cette résolution demande un peu plus de calcul qu’une résolution à 640, mais elle préserve mieux les petits objets. Donc on accepte un coût un peu plus élevé au niveau du calcul pour conserver davantage de détails dans les images.
 
-La formule est identique pour des boîtes horizontales et orientées. Ce qui change est le calcul de l’intersection. Avec deux boîtes horizontales, l’intersection reste simple. Avec deux boîtes inclinées, elle peut devenir un polygone irrégulier, comme la zone foncée de la diapositive.
+Ensuite, la deuxième étape, c’est le backbone CNN. Un CNN, c’est simplement un réseau de neurones conçu pour analyser des images. Son rôle ici, c’est de parcourir l’image et d’en extraire les informations utiles. Au début, il peut repérer des éléments assez simples, comme des contours ou des textures, puis il combine progressivement ces informations pour reconnaître des formes plus complexes.
 
-Pour l’évaluation, une prédiction doit avoir la bonne classe et une IoU suffisante avec une annotation pour être considérée comme correctement localisée. La mAP50 utilise notamment un seuil de 0,50, tandis que la mAP50-95 moyenne les performances sur plusieurs seuils plus exigeants.
+Donc le backbone ne dit pas encore directement : « ici, on a un avion ». Il prépare plutôt une représentation de l’image que le reste du modèle va utiliser. Et ce qu’il apprend à repérer vient directement des images et des annotations utilisées pendant l’entraînement.
 
-L’IoU aide aussi à identifier des prédictions redondantes pendant la NMS. Si plusieurs boîtes très similaires entourent le même objet, leur forte superposition indique qu’il faut probablement n’en conserver qu’une.
+Après ça, on arrive à la troisième étape, qui est le neck multi-échelle. L’idée est assez simple : dans DOTA, on peut avoir de très petits véhicules et des objets beaucoup plus grands, comme des terrains de sport. Le modèle doit donc conserver les petits détails tout en utilisant une vue plus globale. Le neck sert à rassembler ces différents niveaux d’information.
 
-Il faut enfin distinguer IoU et confiance. La confiance indique à quel point le modèle croit à sa prédiction. L’IoU mesure la ressemblance géométrique entre deux boîtes. Une prédiction peut donc être très confiante, mais mal localisée.
+Ensuite, la quatrième étape, c’est la tête OBB. C’est à ce moment-là que le modèle transforme les informations extraites en vraies prédictions. Pour chaque objet qu’il pense avoir trouvé, il donne une classe, par exemple avion ou navire, un score de confiance et une boîte orientée qui indique où l’objet se trouve et dans quelle direction il est placé.
 
-Je présente ici l’IoU comme une mesure centrale pour l’évaluation et les superpositions. Je ne dis pas que cette formule standard constitue, à elle seule, toute la fonction de perte utilisée pour entraîner YOLO-OBB.
+Finalement, la cinquième étape, c’est le filtrage. Le modèle peut produire des prédictions peu fiables ou plusieurs boîtes pour le même objet. Donc on enlève celles dont la confiance est trop faible, puis on garde surtout la meilleure lorsqu’on a plusieurs boîtes très similaires. Cette opération est appelée la NMS.
 
-La partie droite montre maintenant les résultats obtenus sur la validation.
+Donc, si je résume les cinq étapes, on prépare l’image, on extrait les informations avec le CNN, on rassemble les différentes échelles, on produit les boîtes orientées, puis on filtre les résultats.
+
+Ce que je viens de décrire correspond à l’inférence, donc au moment où on utilise un modèle déjà entraîné. Pour la démonstration, je vais simplement charger le meilleur modèle sauvegardé et lui donner une image.
+
+Avant de passer au code, je vais maintenant expliquer une formule importante qui permet de mesurer la superposition entre deux boîtes : l’IoU.
+
+
+------------------------------------------------------------
+DIAPOSITIVE 2 — EXPLICATION DE L’IOU
+Durée visée : environ 3 minutes à 3 minutes 30
+------------------------------------------------------------
+
+Alors ici, à gauche, on a deux boîtes orientées qui se chevauchent. La partie bleu foncé représente la zone qu’elles ont en commun, donc leur intersection.
+
+L’IoU veut dire « Intersection over Union ». En français, c’est simplement l’intersection divisée par l’union.
+
+L’intersection, c’est la partie commune aux deux boîtes. L’union, c’est toute la surface couverte par les deux boîtes ensemble. Pour la calculer, on additionne leurs deux aires, puis on retire l’intersection une fois, puisqu’on l’avait comptée deux fois.
+
+La valeur est toujours comprise entre zéro et un. Si les boîtes ne se touchent pas, l’IoU vaut zéro. Si elles sont parfaitement superposées, elle vaut un. Donc plus on se rapproche de un, plus leur position est similaire.
+
+On a aussi un exemple numérique en bas. Si chaque boîte a une aire de 100 et que leur intersection vaut 60, l’union vaut 100 plus 100 moins 60, donc 140. Ensuite, on divise 60 par 140 et on obtient environ 0,43.
+
+Le point important, c’est que la formule ne change pas avec des boîtes orientées. On calcule toujours une intersection divisée par une union. C’est seulement la forme de la zone commune qui devient plus irrégulière, et ce calcul est pris en charge par les outils utilisés.
+
+Dans le projet, l’IoU sert à vérifier si une prédiction est bien placée par rapport à l’annotation réelle. Si les deux boîtes sont proches, l’IoU est élevée. Si la prédiction est très décalée, elle est faible.
+
+Elle aide aussi à retirer les prédictions en double. Si deux boîtes se recouvrent fortement autour du même objet, on peut garder la plus confiante.
+
+Il faut juste faire attention à ne pas confondre l’IoU et le score de confiance. Le score de confiance vient du modèle et indique à quel point il croit à sa prédiction. L’IoU mesure plutôt la qualité de la superposition entre deux boîtes. Donc un modèle peut être très confiant, mais avoir placé sa boîte au mauvais endroit.
+
+Lorsqu’on évalue toutes les images de validation, l’IoU intervient aussi dans la mAP. Ce qu’il faut surtout retenir, c’est que la mAP50-95 vérifie les résultats avec plusieurs niveaux de superposition, donc c’est une mesure assez exigeante.
+
+Donc maintenant qu’on a vu comment on mesure la qualité des boîtes, on peut regarder les résultats obtenus par les deux modèles.
 
 
 ------------------------------------------------------------
 DIAPOSITIVE 2 — RÉSULTATS PRÉLIMINAIRES
-Durée visée : environ 1 minute
+Durée visée : environ 1 minute 30
 ------------------------------------------------------------
 
-J’ai comparé YOLO26n-OBB-1024 à une baseline Faster R-CNN utilisant des boîtes horizontales.
+Alors à droite, on a la comparaison entre Faster R-CNN, qui est représenté en gris, et YOLO26n-OBB-1024, qui est représenté en bleu.
 
-Le score F1 passe de 0,213 pour Faster R-CNN à 0,386 pour YOLO-OBB. La mAP50-95 passe de 0,060 à 0,185.
+La première mesure, c’est le score F1. Pour l’expliquer simplement, il résume l’équilibre entre la qualité des prédictions et la capacité à retrouver les objets présents. Faster R-CNN obtient 0,213, alors que YOLO-OBB obtient 0,386.
 
-YOLO est aussi plus rapide dans la validation enregistrée : environ 7,9 millisecondes par image, contre 17,1 millisecondes pour Faster R-CNN. Dans cette expérience, YOLO-OBB obtient donc les meilleurs scores et une inférence environ 2,2 fois plus rapide.
+Ensuite, pour la mAP50-95, Faster R-CNN obtient 0,060 et YOLO obtient 0,185. Donc sur les deux mesures présentées, la configuration YOLO donne un meilleur résultat.
 
-Ces résultats restent préliminaires. Le rappel de YOLO est de 0,291, donc une partie importante des objets réels n’est pas retrouvée. Je peux conclure que YOLO-OBB est le meilleur modèle parmi ceux testés, mais pas que le problème est complètement résolu.
+On voit aussi une différence au niveau de la vitesse. Pendant la validation, YOLO a pris en moyenne environ 7,9 millisecondes d’inférence par image, contre 17,1 millisecondes pour Faster R-CNN. Donc dans cette expérience, YOLO est environ 2,2 fois plus rapide.
 
-Je vais terminer en exécutant le modèle sur une tuile de validation.
+Par contre, il faut garder une interprétation raisonnable. Le rappel de YOLO est de 0,291. Donc même si le modèle est meilleur que la baseline, il manque encore une partie importante des objets. Ce sont donc des résultats préliminaires et il reste de la place pour améliorer le modèle.
+
+Cette comparaison montre que la configuration complète de YOLO a mieux fonctionné dans mon expérience. Elle ne permet pas d’attribuer toute la différence à un seul élément.
+
+Je vais maintenant passer au notebook pour montrer directement l’exécution du modèle.
 
 
 ------------------------------------------------------------
-NOTEBOOK — EXÉCUTION DU CODE ET LECTURE DU RÉSULTAT
-Durée visée : environ 1 minute 20 à 1 minute 30
+NOTEBOOK — EXÉCUTION DU CODE ET RÉSULTAT
+Durée visée : environ 1 minute 30 à 2 minutes
 ------------------------------------------------------------
 
-[Passer au notebook `preparation_soutenance_yolo_obb.ipynb`, section 10.]
+[Passer au notebook `preparation_soutenance_yolo_obb.ipynb`, à la section 10.]
 
-Cette cellule est autonome : elle ne dépend pas du notebook principal et ne lance aucun entraînement.
+Alors ici, j’ai préparé une cellule qui est complètement autonome. Donc je n’ai pas besoin de relancer toutes les cellules du projet avant la démonstration, et surtout, je ne relance pas l’entraînement du modèle.
 
 [Lancer la cellule marquée `demo-soutenance`.]
 
-Le code localise les fichiers du projet, charge le meilleur poids et choisit automatiquement le GPU s’il est disponible. Il envoie ensuite une tuile fixe de validation au modèle, avec une taille de 1 024 pixels et un seuil de confiance de 0,25.
+Dans la première partie, le code retrouve les fichiers du projet, charge le meilleur poids sauvegardé et choisit le GPU s’il est disponible. Ensuite, je lui donne une tuile fixe de validation, avec une taille de 1 024 pixels et un seuil de confiance de 0,25.
 
-[Montrer les lignes imprimées et le tableau.]
+[Montrer les informations imprimées et le tableau.]
 
-La sortie indique le périphérique, le nombre de détections et le temps d’exécution. Le tableau classe les prédictions selon leur confiance. Sur cette image, le modèle conserve seize prédictions d’avions avec des scores différents.
+Ici, on peut voir le nom de l’image, le périphérique utilisé, le nombre de détections et le temps d’exécution. Le tableau affiche aussi les classes prédites et les scores de confiance. Sur cette image, le modèle conserve seize prédictions, qui correspondent ici à des avions, avec des scores différents.
 
 [Montrer l’image annotée.]
 
-Chaque prédiction possède une classe, une confiance et une boîte orientée. On voit que les boîtes suivent bien l’angle des avions.
+Et finalement, on retrouve l’image avec les prédictions dessinées dessus. Donc on voit bien les boîtes bleues, les classes, les scores de confiance et surtout les orientations des boîtes autour des avions.
 
-Le temps total de la cellule peut dépasser les 7,9 millisecondes de la diapositive, car il comprend le chargement, l’initialisation et l’affichage. Les 7,9 millisecondes correspondent à la moyenne d’inférence enregistrée pendant la validation.
-
-
-============================================================
-CONCLUSION — ENVIRON 20 À 30 SECONDES
-============================================================
-
-Pour conclure, les boîtes orientées correspondent bien à la géométrie de DOTA et YOLO26n-OBB-1024 dépasse ma baseline en F1, en mAP50-95 et en vitesse.
-
-Le pipeline fonctionne de bout en bout, mais le rappel encore limité montre qu’il reste une marge d’amélioration, notamment pour les objets petits, denses ou difficiles.
-
-Je vous remercie pour votre attention.
+Le temps total de la cellule peut être plus élevé que les 7,9 millisecondes indiquées sur la diapositive, parce qu’il comprend aussi le chargement du modèle et l’affichage. Les 7,9 millisecondes correspondent uniquement à la moyenne de l’inférence pendant la validation.
 
 
 ============================================================
-REPÈRES TEMPORELS
+CONCLUSION — ENVIRON 30 À 40 SECONDES
 ============================================================
 
-- Fin du choix de l’algorithme : environ 1 minute.
-- Fin des cinq étapes : environ 4 minutes.
-- Fin de l’explication de l’IoU : environ 7 minutes.
-- Fin des résultats : environ 8 minutes.
-- Fin de la démonstration : environ 9 minutes 25 à 9 minutes 35.
-- Fin de la conclusion : environ 9 minutes 50.
-- Les dix dernières secondes constituent une marge pour une respiration ou une courte interruption.
+Donc, pour conclure, le modèle que j’ai retenu est YOLO26n-OBB-1024 parce qu’il correspond bien au type d’images qu’on retrouve dans DOTA, surtout avec les objets qui peuvent être inclinés et assez petits.
+
+La comparaison montre que cette configuration obtient de meilleurs résultats que ma baseline Faster R-CNN, tout en étant plus rapide pendant l’inférence.
+
+Par contre, le rappel reste encore assez limité, donc le modèle ne retrouve pas tous les objets. Le pipeline fonctionne bien de bout en bout, mais les résultats peuvent encore être améliorés.
+
+Voilà, ça termine ma présentation. Merci.
+
+
+============================================================
+REPÈRES TEMPORELS APPROXIMATIFS
+============================================================
+
+- Fin de l’introduction et du choix du modèle : environ 1 minute 45.
+- Fin des cinq étapes : environ 5 minutes 30.
+- Fin de l’explication de l’IoU : environ 8 minutes 45.
+- Fin des résultats : environ 10 minutes 15.
+- Fin de la démonstration : environ 11 minutes 40.
+- Fin de la conclusion : environ 12 minutes.
+
+Ces temps sont volontairement souples. Il vaut mieux parler calmement et expliquer clairement que chercher à accélérer pour respecter exactement dix minutes.
 
 
 ============================================================
 PLAN DE SECOURS POUR LA DÉMONSTRATION — À NE PAS RÉCITER
 ============================================================
 
-Si la cellule ne s’exécute pas immédiatement, ne pas chercher le problème pendant la présentation.
-Descendre jusqu’à l’image de secours déjà calculée et dire :
+Si la cellule ne s’exécute pas immédiatement, ne pas essayer de corriger le problème pendant la présentation.
+Descendre directement jusqu’à l’image de secours déjà calculée et dire :
 
-« Afin de respecter le temps de la présentation, j’utilise la sortie sauvegardée de la même cellule. Elle montre les prédictions produites avec le meilleur poids sur la tuile de validation choisie. »
+« Pour ne pas perdre de temps, je vais utiliser la sortie que j’ai déjà sauvegardée après avoir exécuté exactement la même cellule. On retrouve ici les prédictions du modèle sur la tuile de validation. »
 
-Continuer ensuite avec la lecture de l’image annotée et la conclusion normale.
+Continuer ensuite avec l’explication de l’image et la conclusion normale.

@@ -198,4 +198,4 @@ Etat connu :
 - Fiche de repetition : `fiche_orale_soutenance_yolo_obb.md`.
 - Verification : rendu individuel des deux diapositives controle visuellement, deux slides detectees, zero objet hors canvas, zero placeholder, archive PPTX valide et tests du projet `7 passed`.
 - 2026-08-06 : creation de `script_soutenance_yolo_obb_10min.txt`, texte oral complet synchronise avec les deux diapositives et la cellule de demonstration. Le style reprend uniquement la structure du fichier de reference `C:\Users\Tazi\Downloads\script_soutenance_15min.txt` : sections chronometrees, paragraphes naturels, transitions et reperes temporels; aucun contenu du projet de reference n'est reutilise.
-- Le script vise une fin vers 9 min 50 et contient un plan de secours court si l'inference ne peut pas etre relancee immediatement.
+- Le script a ensuite ete repris selon le style oral fourni par l'etudiant : formulations conversationnelles, transitions naturelles et moins de details susceptibles d'ouvrir des questions techniques. Il contient environ 1 600 mots prononces, vise environ 11 a 12 minutes selon le debit et conserve un plan de secours court pour la demonstration.
