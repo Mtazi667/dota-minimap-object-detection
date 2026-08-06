@@ -1,0 +1,46 @@
+============================================================
+DERNIERE PARTIE - EXECUTION DU NOTEBOOK ET RESULTAT
+Version provisoire a valider
+Duree visee : environ 2 minutes 30 a 3 minutes
+============================================================
+
+[Ouvrir demonstration_soutenance_yolo_obb.ipynb.]
+
+Alors, maintenant, je passe directement au notebook. J'ai préparé une version séparée spécialement pour la présentation. Elle reprend l'exploration des données, le prétraitement et toute la partie prédictive, mais elle s'arrête après la comparaison des deux modèles puisque c'est cette partie qui nous intéresse aujourd'hui.
+
+Je ne vais pas relancer tout le notebook parce qu'il contient aussi les étapes de préparation et d'entraînement, qui sont beaucoup plus longues. Par contre, toutes les sorties sont déjà enregistrées, donc on peut quand même voir les résultats obtenus dans les différentes sections.
+
+[Descendre jusqu'à la section « Démonstration finale pour la soutenance ».]
+
+Pour l'exécution en direct, j'ai ajouté une dernière section qui est complètement autonome. Juste au-dessus du code, j'ai résumé ce qu'il fait en quatre étapes.
+
+Donc, premièrement, il retrouve les fichiers nécessaires dans le projet. Ensuite, il vérifie si le GPU est disponible. Après ça, il charge le meilleur poids de YOLO que j'ai sauvegardé à la fin de l'entraînement. Et finalement, il envoie une tuile de validation au modèle, compte les détections et affiche l'image avec les boîtes orientées.
+
+[Lancer la grande cellule de code placée juste sous les quatre étapes.]
+
+Donc ici, je ne relance aucun entraînement. Le modèle a déjà appris ses poids auparavant. Je lui donne simplement une tuile de validation de 1024 par 1024 pixels, donc une image qui n'a pas été utilisée pour entraîner directement le modèle.
+
+[Montrer les lignes affichées sous la cellule.]
+
+La sortie confirme d'abord le modèle utilisé, le nom de la tuile et le matériel choisi. Sur cet exemple, le modèle conserve seize détections.
+
+On voit aussi deux temps différents. Le temps total correspond à toute la cellule, donc il comprend le chargement du modèle, l'inférence et l'affichage. C'est pour ça qu'il est plus élevé que les 7,9 millisecondes présentées sur la diapositive. Les 7,9 millisecondes correspondent seulement au temps moyen de l'inférence pendant l'évaluation.
+
+[Montrer l'image annotée.]
+
+Et ici, on obtient le résultat final. On voit que les rectangles suivent bien l'orientation des avions au lieu de rester complètement horizontaux. C'est vraiment le résultat principal que je voulais montrer avec YOLO-OBB : le modèle localise les objets, indique leur classe et leur niveau de confiance, tout en conservant leur orientation.
+
+Il faut quand même préciser qu'ici, je montre seulement une tuile choisie pour illustrer le fonctionnement du modèle. Les résultats globaux présentés juste avant ne viennent pas de cette seule image : ils viennent de l'évaluation complète sur les 245 tuiles de validation.
+
+Donc, cette exécution permet de montrer que le pipeline fonctionne du début à la fin. Je charge un modèle déjà entraîné, je lui donne une nouvelle tuile, puis je récupère directement ses prédictions et les boîtes orientées qu'il a produites.
+
+Voilà, ça termine la partie démonstration.
+
+
+============================================================
+PLAN DE SECOURS - NE PAS LIRE SAUF EN CAS DE PROBLEME
+============================================================
+
+Si la cellule prend trop de temps ou rencontre un problème, ne pas la relancer plusieurs fois. Montrer simplement la sortie qui est déjà enregistrée dans le notebook et dire :
+
+« La sortie est déjà enregistrée ici. On retrouve exactement la même exécution, avec les seize détections et les boîtes orientées affichées sur la tuile de validation. »
