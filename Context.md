@@ -197,3 +197,5 @@ Etat connu :
 - PowerPoint final : `outputs/soutenance_yolo_obb.pptx`, exactement deux diapositives. Diapositive 1 : justification et pipeline en cinq etapes. Diapositive 2 : IoU orientee, comparaison F1/mAP50-95, vitesse et limite de rappel.
 - Fiche de repetition : `fiche_orale_soutenance_yolo_obb.md`.
 - Verification : rendu individuel des deux diapositives controle visuellement, deux slides detectees, zero objet hors canvas, zero placeholder, archive PPTX valide et tests du projet `7 passed`.
+- 2026-08-06 : creation de `script_soutenance_yolo_obb_10min.txt`, texte oral complet synchronise avec les deux diapositives et la cellule de demonstration. Le style reprend uniquement la structure du fichier de reference `C:\Users\Tazi\Downloads\script_soutenance_15min.txt` : sections chronometrees, paragraphes naturels, transitions et reperes temporels; aucun contenu du projet de reference n'est reutilise.
+- Le script vise une fin vers 9 min 50 et contient un plan de secours court si l'inference ne peut pas etre relancee immediatement.
