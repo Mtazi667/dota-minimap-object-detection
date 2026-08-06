@@ -187,3 +187,13 @@ Etat connu :
 - Limites explicites : sous-ensemble DOTA, comparaison de modeles non factorielle, absence de labels test locaux, desequilibre des classes, 53 images causales, sensibilite aux seuils et bootstrap sans reentrainement complet des nuisances.
 - Les huit controles finaux passent : donnees presentes, splits sans fuite, 15 classes, poids disponibles, 245 tuiles evaluees, deux modeles compares, 1 646 objets causaux uniques et estimations completes.
 - Etat final du notebook de soutenance : 83 cellules dont 37 cellules de code executees avec `dota-gpu`, comptes 1 a 37, zero erreur, aucun chemin utilisateur absolu et aucune source non ASCII. Les six questions sont presentes et les tests donnent 7 passes. Le notebook est techniquement termine; restent seulement les options d'export ou de preparation orale.
+
+## Preparation de la presentation de 10 minutes le 2026-08-06
+- Consigne du professeur : PowerPoint de deux pages maximum, choix de l'algorithme en 1 minute, fonctionnement en 4 ou 5 etapes en 3 minutes, formule mathematique en 3 minutes, code et resultats preliminaires en 2 minutes, pour 10 minutes au total.
+- Angle retenu avec l'etudiant : YOLO26n-OBB-1024, formule de l'IoU orientee, comparaison avec Faster R-CNN HBB et demonstration d'inference sans entrainement en direct.
+- Decision pedagogique : ne pas modifier le notebook principal. Le nouveau notebook `preparation_soutenance_yolo_obb.ipynb` concentre CNN, backbone/neck/head, YOLO-OBB, IoU, confiance, NMS, metriques, resultats, questions probables, chronometrage et checklist.
+- La derniere cellule du notebook pedagogique est autonome. Elle charge directement le meilleur poids, utilise la tuile fixe `P0249__x0_y653.jpg`, choisit CUDA ou CPU et affiche les OBB. Test clean-kernel avec `dota-gpu` : 3 cellules de code executees, zero erreur, 16 detections et environ 0.62 seconde pour la cellule lors du controle.
+- Image de secours : `outputs/presentation_assets/demo_p0249_yolo_obb.jpg`. Illustration IoU : `outputs/presentation_assets/iou_obb_diagram.png`.
+- PowerPoint final : `outputs/soutenance_yolo_obb.pptx`, exactement deux diapositives. Diapositive 1 : justification et pipeline en cinq etapes. Diapositive 2 : IoU orientee, comparaison F1/mAP50-95, vitesse et limite de rappel.
+- Fiche de repetition : `fiche_orale_soutenance_yolo_obb.md`.
+- Verification : rendu individuel des deux diapositives controle visuellement, deux slides detectees, zero objet hors canvas, zero placeholder, archive PPTX valide et tests du projet `7 passed`.
